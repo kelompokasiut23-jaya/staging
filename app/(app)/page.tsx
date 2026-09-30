@@ -6,11 +6,13 @@ import {
   AlertTriangleIcon,
   ArrowRightIcon,
   CheckCircle2Icon,
+  CheckIcon,
   ClipboardListIcon,
   PackageIcon,
 } from "lucide-react"
 
 import { NewOrderDialog } from "@/components/new-order-dialog"
+import { NewProductDialog } from "@/components/new-product-dialog"
 import { OrderDetailSheet } from "@/components/order-detail-sheet"
 import { LateBadge, PriorityBadge, StageBadge } from "@/components/order-badges"
 import { Button } from "@/components/ui/button"
@@ -33,10 +35,11 @@ import {
   stageLabel,
   type Order,
 } from "@/lib/production"
-import { useOrders, useToday } from "@/lib/store"
+import { useOrders, useProducts, useToday } from "@/lib/store"
 
 export default function DashboardPage() {
   const orders = useOrders()
+  const products = useProducts()
   const today = useToday()
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -45,7 +48,9 @@ export default function DashboardPage() {
   const finished = orders.filter(isDone)
   const targetUnits = active.reduce((sum, o) => sum + o.quantity, 0)
   const producedUnits = active.reduce((sum, o) => sum + o.produced, 0)
-  const unitPercent = targetUnits ? Math.round((producedUnits / targetUnits) * 100) : 0
+  const unitPercent = targetUnits
+    ? Math.round((producedUnits / targetUnits) * 100)
+    : 0
 
   const attention = active
     .filter((o) => isLate(o, today) || o.priority === "urgent")
@@ -56,11 +61,36 @@ export default function DashboardPage() {
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, 6)
 
+  if (orders.length === 0) {
+    return (
+      <div className="flex w-full max-w-3xl flex-col gap-6">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Dashboard Produksi
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Di sini Anda bisa melihat ringkasan order dan tahap produksi.
+          </p>
+        </div>
+        <GettingStarted
+          hasProducts={products.length > 0}
+          onCreated={setSelected}
+        />
+        <OrderDetailSheet
+          orderId={selected}
+          onOpenChange={(open) => !open && setSelected(null)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Dashboard Produksi</h1>
+          <h1 className="text-xl font-semibold tracking-tight">
+            Dashboard Produksi
+          </h1>
           <p className="text-sm text-muted-foreground">
             Ringkasan order dan tahap produksi terkini.
           </p>
@@ -77,7 +107,7 @@ export default function DashboardPage() {
         />
         <Kpi
           icon={PackageIcon}
-          label="Unit diproduksi"
+          label="Unit sudah jadi"
           value={formatNumber(producedUnits)}
           hint={`${unitPercent}% dari ${formatNumber(targetUnits)} unit`}
         />
@@ -91,7 +121,7 @@ export default function DashboardPage() {
           icon={AlertTriangleIcon}
           label="Terlambat"
           value={formatNumber(late.length)}
-          hint="Melewati deadline"
+          hint="Melewati batas waktu"
           tone={late.length > 0 ? "danger" : "default"}
         />
       </div>
@@ -100,13 +130,17 @@ export default function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Order per tahap</CardTitle>
-            <CardDescription>Jumlah order aktif di setiap tahap produksi.</CardDescription>
+            <CardDescription>
+              Jumlah order yang masih berjalan di setiap tahap.
+            </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             {STAGES.filter((s) => s.key !== "selesai").map((stage) => {
               const inStage = active.filter((o) => o.stage === stage.key)
               const units = inStage.reduce((sum, o) => sum + o.quantity, 0)
-              const share = active.length ? (inStage.length / active.length) * 100 : 0
+              const share = active.length
+                ? (inStage.length / active.length) * 100
+                : 0
               return (
                 <div key={stage.key} className="grid gap-1.5">
                   <div className="flex items-baseline justify-between gap-2 text-sm">
@@ -115,7 +149,10 @@ export default function DashboardPage() {
                       {inStage.length} order · {formatNumber(units)} unit
                     </span>
                   </div>
-                  <Progress value={share} aria-label={`Order di tahap ${stage.label}`} />
+                  <Progress
+                    value={share}
+                    aria-label={`Order di tahap ${stage.label}`}
+                  />
                 </div>
               )
             })}
@@ -125,7 +162,9 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Aktivitas terbaru</CardTitle>
-            <CardDescription>Pembaruan status terakhir.</CardDescription>
+            <CardDescription>
+              Perubahan tahap yang baru dicatat.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="grid gap-4">
@@ -137,7 +176,9 @@ export default function DashboardPage() {
                     className="w-full rounded-md text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
                     <p className="text-sm font-medium">
-                      <span className="font-mono text-xs">{entry.order.id}</span>{" "}
+                      <span className="font-mono text-xs">
+                        {entry.order.id}
+                      </span>{" "}
                       <span className="text-muted-foreground">→</span>{" "}
                       {stageLabel(entry.stage)}
                     </p>
@@ -155,12 +196,14 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Perlu perhatian</CardTitle>
-          <CardDescription>Order terlambat atau berprioritas urgent.</CardDescription>
+          <CardDescription>
+            Order yang terlambat atau berprioritas mendesak.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {attention.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              Tidak ada order yang perlu perhatian khusus.
+              Tidak ada order yang terlambat atau mendesak. Semua aman.
             </p>
           ) : (
             <ul className="divide-y">
@@ -175,7 +218,11 @@ export default function DashboardPage() {
             </ul>
           )}
           <div className="mt-4 flex justify-end">
-            <Button variant="outline" size="sm" render={<Link href="/orders" />}>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link href="/orders" />}
+            >
               Lihat semua order
               <ArrowRightIcon data-icon="inline-end" />
             </Button>
@@ -183,7 +230,10 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <OrderDetailSheet orderId={selected} onOpenChange={(open) => !open && setSelected(null)} />
+      <OrderDetailSheet
+        orderId={selected}
+        onOpenChange={(open) => !open && setSelected(null)}
+      />
     </div>
   )
 }
@@ -206,9 +256,16 @@ function Kpi({
       <CardContent className="grid gap-1">
         <div className="flex items-center justify-between text-muted-foreground">
           <span className="text-xs sm:text-sm">{label}</span>
-          <Icon className={tone === "danger" ? "size-4 text-destructive" : "size-4"} />
+          <Icon
+            className={tone === "danger" ? "size-4 text-destructive" : "size-4"}
+          />
         </div>
-        <p className={"text-2xl font-semibold tabular-nums " + (tone === "danger" ? "text-destructive" : "")}>
+        <p
+          className={
+            "text-2xl font-semibold tabular-nums " +
+            (tone === "danger" ? "text-destructive" : "")
+          }
+        >
           {value}
         </p>
         <p className="text-xs text-muted-foreground">{hint}</p>
@@ -236,14 +293,16 @@ function AttentionRow({
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-xs text-muted-foreground">{order.id}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {order.id}
+            </span>
             <StageBadge stage={order.stage} />
             <PriorityBadge priority={order.priority} />
             {late && <LateBadge />}
           </div>
           <p className="mt-1 truncate text-sm font-medium">{order.product}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {order.customer} · Deadline {formatDate(order.dueDate)}
+            {order.customer} · Batas waktu {formatDate(order.dueDate)}
           </p>
         </div>
         <div className="grid gap-1">
@@ -253,9 +312,98 @@ function AttentionRow({
             </span>
             <span>{percent}%</span>
           </div>
-          <Progress value={percent} aria-label="Progres produksi" />
+          <Progress value={percent} aria-label="Progres pengerjaan" />
         </div>
       </button>
     </li>
+  )
+}
+
+function GettingStarted({
+  hasProducts,
+  onCreated,
+}: {
+  hasProducts: boolean
+  onCreated: (orderId: string) => void
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Mulai dari sini</CardTitle>
+        <CardDescription>
+          Belum ada data. Ikuti dua langkah berikut secara berurutan, lalu
+          ringkasan produksi akan muncul di halaman ini.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-5">
+        <Step
+          number={1}
+          done={hasProducts}
+          title="Tambah produk"
+          description="Tulis nama barang yang Anda produksi, misalnya “Kursi Kantor”."
+        >
+          {hasProducts ? (
+            <p className="text-sm text-muted-foreground">
+              Sudah selesai. Produk sudah ada.
+            </p>
+          ) : (
+            <NewProductDialog className="w-full sm:w-auto" />
+          )}
+        </Step>
+
+        <Step
+          number={2}
+          done={false}
+          disabled={!hasProducts}
+          title="Catat order pertama"
+          description="Isi siapa yang memesan, berapa jumlahnya, kapan batas waktunya, dan tahap produksi yang sedang berjalan."
+        >
+          <NewOrderDialog
+            onCreated={onCreated}
+            className="w-full sm:w-auto"
+            align="start"
+            disabledReason="Selesaikan langkah 1 dulu agar tombol ini aktif."
+          />
+        </Step>
+      </CardContent>
+    </Card>
+  )
+}
+
+function Step({
+  number,
+  done,
+  disabled = false,
+  title,
+  description,
+  children,
+}: {
+  number: number
+  done: boolean
+  disabled?: boolean
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className={"flex gap-3 " + (disabled ? "opacity-80" : "")}>
+      <div
+        className={
+          "flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-medium " +
+          (done
+            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+            : "bg-muted")
+        }
+      >
+        {done ? <CheckIcon className="size-4" /> : number}
+      </div>
+      <div className="grid min-w-0 flex-1 gap-2">
+        <div>
+          <p className="font-medium">{title}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <div className="flex flex-col gap-1.5 sm:items-start">{children}</div>
+      </div>
+    </div>
   )
 }

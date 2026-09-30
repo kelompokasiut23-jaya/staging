@@ -45,7 +45,10 @@ export function PriorityBadge({
   className?: string
 }) {
   return (
-    <Badge variant="outline" className={cn(PRIORITY_STYLES[priority], className)}>
+    <Badge
+      variant="outline"
+      className={cn(PRIORITY_STYLES[priority], className)}
+    >
       {priorityLabel(priority)}
     </Badge>
   )

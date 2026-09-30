@@ -3,19 +3,26 @@
 import { useSyncExternalStore } from "react"
 
 import {
-  SEED_TODAY,
-  createSeedOrders,
+  FALLBACK_TODAY,
   stageIndex,
   todayString,
   type NewOrderInput,
+  type NewProductInput,
   type Order,
+  type Product,
   type ProgressUpdateInput,
 } from "@/lib/production"
 
-const STORAGE_KEY = "produksi-monitor:orders:v1"
+const STORAGE_KEY = "produksi-monitor:data:v2"
 
-const seedOrders = createSeedOrders()
-let orders: Order[] = seedOrders
+interface Data {
+  products: Product[]
+  orders: Order[]
+}
+
+const EMPTY: Data = { products: [], orders: [] }
+
+let data: Data = EMPTY
 let loaded = false
 const listeners = new Set<() => void>()
 
@@ -24,21 +31,22 @@ function load() {
   loaded = true
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) orders = parsed as Order[]
+    if (!raw) return
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed?.products) && Array.isArray(parsed?.orders)) {
+      data = { products: parsed.products, orders: parsed.orders }
     }
   } catch {
-    orders = seedOrders
+    data = EMPTY
   }
 }
 
-function commit(next: Order[]) {
-  orders = next
+function commit(next: Data) {
+  data = next
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   } catch {
-    // penyimpanan tidak tersedia, data tetap ada selama halaman terbuka
+    // penyimpanan browser tidak tersedia, data tetap ada selama halaman terbuka
   }
   listeners.forEach((listener) => listener())
 }
@@ -50,45 +58,83 @@ function subscribe(listener: () => void) {
   }
 }
 
-function getSnapshot() {
-  load()
-  return orders
-}
-
-function getServerSnapshot() {
-  return seedOrders
-}
-
 export function useOrders() {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  return useSyncExternalStore(
+    subscribe,
+    () => {
+      load()
+      return data.orders
+    },
+    () => EMPTY.orders
+  )
+}
+
+export function useProducts() {
+  return useSyncExternalStore(
+    subscribe,
+    () => {
+      load()
+      return data.products
+    },
+    () => EMPTY.products
+  )
 }
 
 const noopSubscribe = () => () => {}
 
 export function useToday() {
-  return useSyncExternalStore(noopSubscribe, todayString, () => SEED_TODAY)
+  return useSyncExternalStore(noopSubscribe, todayString, () => FALLBACK_TODAY)
 }
 
-function nextOrderId(current: Order[]) {
-  const max = current.reduce((highest, order) => {
-    const number = Number(order.id.split("-").pop())
+function nextId(prefix: string, ids: string[]) {
+  const max = ids.reduce((highest, id) => {
+    const number = Number(id.split("-").pop())
     return Number.isFinite(number) ? Math.max(highest, number) : highest
   }, 0)
-  return `ORD-${new Date().getFullYear()}-${String(max + 1).padStart(3, "0")}`
+  return `${prefix}-${String(max + 1).padStart(3, "0")}`
 }
 
-function newHistoryId(orderId: string, length: number) {
+function historyId(orderId: string, length: number) {
   return `${orderId}-h${length}-${Date.now()}`
 }
 
-export function addOrder(input: NewOrderInput): Order {
+export function addProduct(input: NewProductInput): Product {
   load()
+  const product: Product = {
+    id: nextId(
+      "PRD",
+      data.products.map((p) => p.id)
+    ),
+    name: input.name,
+    note: input.note,
+    createdAt: new Date().toISOString(),
+  }
+  commit({ ...data, products: [...data.products, product] })
+  return product
+}
+
+export function deleteProduct(productId: string) {
+  load()
+  if (data.orders.some((order) => order.productId === productId)) return false
+  commit({ ...data, products: data.products.filter((p) => p.id !== productId) })
+  return true
+}
+
+export function addOrder(input: NewOrderInput): Order | null {
+  load()
+  const product = data.products.find((p) => p.id === input.productId)
+  if (!product) return null
+
   const now = new Date().toISOString()
-  const id = nextOrderId(orders)
+  const id = `ORD-${nextId(
+    String(new Date().getFullYear()),
+    data.orders.map((o) => o.id)
+  )}`
   const order: Order = {
     id,
     customer: input.customer,
-    product: input.product,
+    productId: product.id,
+    product: product.name,
     quantity: input.quantity,
     produced: input.produced,
     stage: input.stage,
@@ -98,7 +144,7 @@ export function addOrder(input: NewOrderInput): Order {
     createdAt: now,
     history: [
       {
-        id: newHistoryId(id, 0),
+        id: historyId(id, 0),
         at: now,
         stage: input.stage,
         produced: input.produced,
@@ -106,20 +152,21 @@ export function addOrder(input: NewOrderInput): Order {
       },
     ],
   }
-  commit([order, ...orders])
+  commit({ ...data, orders: [order, ...data.orders] })
   return order
 }
 
 export function updateProgress(orderId: string, input: ProgressUpdateInput) {
   load()
   const now = new Date().toISOString()
-  commit(
-    orders.map((order) => {
+  commit({
+    ...data,
+    orders: data.orders.map((order) => {
       if (order.id !== orderId) return order
       const moved = stageIndex(input.stage) !== stageIndex(order.stage)
       const note =
         input.note.trim() ||
-        (moved ? "Tahap diperbarui" : "Jumlah produksi aktual diperbarui")
+        (moved ? "Tahap diperbarui" : "Jumlah yang sudah jadi diperbarui")
       return {
         ...order,
         stage: input.stage,
@@ -127,7 +174,7 @@ export function updateProgress(orderId: string, input: ProgressUpdateInput) {
         history: [
           ...order.history,
           {
-            id: newHistoryId(order.id, order.history.length),
+            id: historyId(order.id, order.history.length),
             at: now,
             stage: input.stage,
             produced: input.produced,
@@ -135,15 +182,10 @@ export function updateProgress(orderId: string, input: ProgressUpdateInput) {
           },
         ],
       }
-    })
-  )
+    }),
+  })
 }
 
-export function deleteOrder(orderId: string) {
-  load()
-  commit(orders.filter((order) => order.id !== orderId))
-}
-
-export function resetOrders() {
-  commit(createSeedOrders())
+export function clearAllData() {
+  commit(EMPTY)
 }

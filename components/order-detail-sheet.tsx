@@ -102,18 +102,18 @@ function Summary({ order, today }: { order: Order; today: string }) {
     <section className="space-y-3">
       <div className="space-y-1.5">
         <div className="flex items-baseline justify-between text-sm">
-          <span className="text-muted-foreground">Produksi aktual</span>
+          <span className="text-muted-foreground">Sudah jadi</span>
           <span className="font-medium tabular-nums">
             {formatNumber(order.produced)} / {formatNumber(order.quantity)} unit
             ({percent}%)
           </span>
         </div>
-        <Progress value={percent} aria-label="Progres produksi" />
+        <Progress value={percent} aria-label="Progres pengerjaan" />
       </div>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <div>
-          <dt className="text-xs text-muted-foreground">Deadline</dt>
+          <dt className="text-xs text-muted-foreground">Batas waktu</dt>
           <dd className="font-medium">
             {formatDate(order.dueDate)}
             {deadlineNote && (
@@ -130,7 +130,7 @@ function Summary({ order, today }: { order: Order; today: string }) {
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Dicatat</dt>
+          <dt className="text-xs text-muted-foreground">Dicatat pada</dt>
           <dd className="font-medium">{formatDate(order.createdAt)}</dd>
         </div>
         <div>
@@ -157,7 +157,9 @@ function UpdateForm({ order }: { order: Order }) {
     event.preventDefault()
     const value = Number(produced)
     if (!Number.isInteger(value) || value < 0 || value > order.quantity) {
-      setError(`Isi bilangan bulat antara 0 dan ${formatNumber(order.quantity)}`)
+      setError(
+        `Isi bilangan bulat antara 0 dan ${formatNumber(order.quantity)}`
+      )
       return
     }
     if (stage === order.stage && value === order.produced && !note.trim()) {
@@ -170,7 +172,7 @@ function UpdateForm({ order }: { order: Order }) {
 
   return (
     <section className="space-y-3">
-      <h3 className="text-sm font-medium">Perbarui status aktual</h3>
+      <h3 className="text-sm font-medium">Perbarui kondisi terkini</h3>
       <form onSubmit={submit} className="grid gap-3" noValidate>
         <Field label="Tahap saat ini" htmlFor="update-stage">
           <Select
@@ -192,7 +194,7 @@ function UpdateForm({ order }: { order: Order }) {
         </Field>
 
         <Field
-          label="Jumlah diproduksi (unit)"
+          label="Jumlah yang sudah jadi (unit)"
           htmlFor="update-produced"
           error={error}
         >
@@ -211,7 +213,7 @@ function UpdateForm({ order }: { order: Order }) {
           />
         </Field>
 
-        <Field label="Catatan (opsional)" htmlFor="update-note">
+        <Field label="Catatan (boleh dikosongkan)" htmlFor="update-note">
           <Textarea
             id="update-note"
             rows={2}

@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { DisabledReason } from "@/components/empty-state"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -30,7 +32,7 @@ import {
   type PriorityKey,
   type StageKey,
 } from "@/lib/production"
-import { addOrder, useToday } from "@/lib/store"
+import { addOrder, useProducts, useToday } from "@/lib/store"
 
 const STAGE_ITEMS = STAGES.filter((s) => s.key !== "selesai").map((s) => ({
   value: s.key,
@@ -40,7 +42,7 @@ const PRIORITY_ITEMS = PRIORITIES.map((p) => ({ value: p.key, label: p.label }))
 
 interface FormState {
   customer: string
-  product: string
+  productId: string
   quantity: string
   dueDate: string
   priority: PriorityKey
@@ -51,7 +53,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   customer: "",
-  product: "",
+  productId: "",
   quantity: "",
   dueDate: "",
   priority: "normal",
@@ -65,14 +67,20 @@ type Errors = Partial<Record<keyof FormState, string>>
 export function NewOrderDialog({
   onCreated,
   className,
+  align = "end",
+  disabledReason,
 }: {
   onCreated?: (orderId: string) => void
   className?: string
+  align?: "start" | "end"
+  disabledReason?: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY)
   const [errors, setErrors] = useState<Errors>({})
   const today = useToday()
+  const products = useProducts()
+  const productItems = products.map((p) => ({ value: p.id, label: p.name }))
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -93,10 +101,10 @@ export function NewOrderDialog({
     const next: Errors = {}
 
     if (!form.customer.trim()) next.customer = "Nama pelanggan wajib diisi"
-    if (!form.product.trim()) next.product = "Nama produk wajib diisi"
+    if (!form.productId) next.productId = "Pilih produk terlebih dahulu"
     if (!Number.isInteger(quantity) || quantity <= 0)
       next.quantity = "Jumlah harus bilangan bulat lebih dari 0"
-    if (!form.dueDate) next.dueDate = "Tanggal deadline wajib diisi"
+    if (!form.dueDate) next.dueDate = "Batas waktu wajib diisi"
     if (!Number.isInteger(produced) || produced < 0 || produced > quantity)
       next.produced = "Harus antara 0 dan jumlah order"
 
@@ -105,7 +113,7 @@ export function NewOrderDialog({
 
     const order = addOrder({
       customer: form.customer.trim(),
-      product: form.product.trim(),
+      productId: form.productId,
       quantity,
       produced,
       dueDate: form.dueDate,
@@ -113,9 +121,43 @@ export function NewOrderDialog({
       stage: form.stage,
       notes: form.notes.trim(),
     })
+    if (!order) {
+      setErrors({ productId: "Produk tidak ditemukan, pilih ulang" })
+      return
+    }
     toast.success(`Order ${order.id} berhasil dicatat`)
     setOpen(false)
     onCreated?.(order.id)
+  }
+
+  if (products.length === 0) {
+    return (
+      <div
+        className={
+          "flex flex-col gap-1.5 " +
+          (align === "end" ? "sm:items-end" : "sm:items-start")
+        }
+      >
+        <Button disabled className={className}>
+          <PlusIcon data-icon="inline-start" />
+          Catat Order
+        </Button>
+        <DisabledReason>
+          {disabledReason ?? (
+            <>
+              Belum bisa dipakai. Tambahkan produk dulu di menu{" "}
+              <Link
+                href="/produk"
+                className="font-medium text-foreground underline underline-offset-2"
+              >
+                Produk
+              </Link>
+              .
+            </>
+          )}
+        </DisabledReason>
+      </div>
+    )
   }
 
   return (
@@ -128,8 +170,8 @@ export function NewOrderDialog({
         <DialogHeader>
           <DialogTitle>Catat order masuk</DialogTitle>
           <DialogDescription>
-            Isi data order dan tahap produksi saat ini agar sesuai dengan kondisi
-            aktual di lapangan.
+            Isi data order, lalu pilih tahap produksi yang sedang berjalan
+            sekarang agar sama dengan kondisi di lapangan.
           </DialogDescription>
         </DialogHeader>
 
@@ -144,18 +186,35 @@ export function NewOrderDialog({
             />
           </Field>
 
-          <Field label="Produk" htmlFor="product" error={errors.product}>
-            <Input
-              id="product"
-              placeholder="Contoh: Kursi Kantor Ergonomis"
-              value={form.product}
-              onChange={(e) => set("product", e.target.value)}
-              aria-invalid={!!errors.product}
-            />
+          <Field label="Produk" htmlFor="product" error={errors.productId}>
+            <Select
+              value={form.productId || null}
+              items={productItems}
+              onValueChange={(v) => v && set("productId", v)}
+            >
+              <SelectTrigger
+                id="product"
+                className="w-full"
+                aria-invalid={!!errors.productId}
+              >
+                <SelectValue placeholder="Pilih produk" />
+              </SelectTrigger>
+              <SelectContent>
+                {productItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Jumlah order (unit)" htmlFor="quantity" error={errors.quantity}>
+            <Field
+              label="Jumlah yang dipesan (unit)"
+              htmlFor="quantity"
+              error={errors.quantity}
+            >
               <Input
                 id="quantity"
                 type="number"
@@ -166,7 +225,7 @@ export function NewOrderDialog({
                 aria-invalid={!!errors.quantity}
               />
             </Field>
-            <Field label="Deadline" htmlFor="dueDate" error={errors.dueDate}>
+            <Field label="Batas waktu" htmlFor="dueDate" error={errors.dueDate}>
               <Input
                 id="dueDate"
                 type="date"
@@ -218,10 +277,10 @@ export function NewOrderDialog({
           </div>
 
           <Field
-            label="Sudah diproduksi (unit)"
+            label="Sudah jadi (unit)"
             htmlFor="produced"
             error={errors.produced}
-            hint="Isi jika order sudah mulai dikerjakan."
+            hint="Isi jika order sudah mulai dikerjakan. Kosongkan (0) jika belum."
           >
             <Input
               id="produced"
@@ -234,7 +293,7 @@ export function NewOrderDialog({
             />
           </Field>
 
-          <Field label="Catatan (opsional)" htmlFor="notes">
+          <Field label="Catatan (boleh dikosongkan)" htmlFor="notes">
             <Textarea
               id="notes"
               rows={2}
@@ -244,7 +303,11 @@ export function NewOrderDialog({
           </Field>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Batal
             </Button>
             <Button type="submit">Simpan Order</Button>
