@@ -1,7 +1,7 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import {
   ClipboardListIcon,
   FactoryIcon,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { NavMain } from "@/components/nav-main"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -26,82 +27,42 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar"
 import { clearAllData, useOrders, useProducts } from "@/lib/store"
 
 const NAV = [
-  { title: "Dashboard", href: "/", icon: LayoutDashboardIcon },
-  { title: "Produk", href: "/produk", icon: PackageIcon },
-  { title: "Daftar Order", href: "/orders", icon: ClipboardListIcon },
+  { title: "Dashboard", url: "/", icon: <LayoutDashboardIcon /> },
+  { title: "Produk", url: "/produk", icon: <PackageIcon /> },
+  { title: "Daftar Order", url: "/orders", icon: <ClipboardListIcon /> },
 ]
 
-export function AppSidebar() {
-  const pathname = usePathname()
-  const { setOpenMobile } = useSidebar()
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasData = useProducts().length + useOrders().length > 0
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              size="lg"
-              render={<Link href="/" onClick={() => setOpenMobile(false)} />}
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              render={<Link href="/" />}
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <FactoryIcon className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
-                  Monitoring Produksi
-                </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  Catat dan pantau produksi
-                </span>
-              </div>
+              <FactoryIcon className="size-5!" />
+              <span className="text-base font-semibold">
+                Monitoring Produksi
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {NAV.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    isActive={
-                      item.href === "/"
-                        ? pathname === "/"
-                        : pathname.startsWith(item.href)
-                    }
-                    render={
-                      <Link
-                        href={item.href}
-                        onClick={() => setOpenMobile(false)}
-                      />
-                    }
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <NavMain items={NAV} />
       </SidebarContent>
 
       <SidebarFooter>
@@ -150,7 +111,7 @@ export function AppSidebar() {
               </DialogContent>
             </Dialog>
             {!hasData && (
-              <p className="px-2 pt-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+              <p className="px-2 pt-1 text-xs text-muted-foreground">
                 Aktif setelah ada data.
               </p>
             )}

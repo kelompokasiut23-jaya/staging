@@ -159,3 +159,47 @@ export function formatDateTime(value: string) {
 export function formatNumber(value: number) {
   return new Intl.NumberFormat("id-ID").format(value)
 }
+
+export function dayOf(iso: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(
+    new Date(iso)
+  )
+}
+
+const chartDayFormatter = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+})
+
+export function formatChartDay(day: string) {
+  return chartDayFormatter.format(new Date(`${day}T00:00:00Z`))
+}
+
+/** Jumlah unit yang tercatat selesai dikerjakan per hari, sampai hari ini. */
+export function dailyProduction(orders: Order[], days: number, today: string) {
+  const totals = new Map<string, number>()
+  for (const order of orders) {
+    let previous = 0
+    for (const entry of order.history) {
+      const gained = Math.max(0, entry.produced - previous)
+      previous = entry.produced
+      if (gained === 0) continue
+      const day = dayOf(entry.at)
+      totals.set(day, (totals.get(day) ?? 0) + gained)
+    }
+  }
+
+  const series: { date: string; units: number }[] = []
+  for (let i = days - 1; i >= 0; i--) {
+    const date = addDays(today, -i)
+    series.push({ date, units: totals.get(date) ?? 0 })
+  }
+  return series
+}
+
+function addDays(day: string, amount: number) {
+  const date = new Date(`${day}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + amount)
+  return date.toISOString().slice(0, 10)
+}
