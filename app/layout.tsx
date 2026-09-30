@@ -16,10 +16,10 @@ const fontMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Monitoring Produksi",
-    template: "%s | Monitoring Produksi",
+    default: "Monitoring QC",
+    template: "%s | Monitoring QC",
   },
-  description: "Pencatatan order dan pemantauan tahap produksi.",
+  description: "Pencatatan hasil pemeriksaan kualitas per line.",
 }
 
 export default function RootLayout({

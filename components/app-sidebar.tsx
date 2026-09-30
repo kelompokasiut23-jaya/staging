@@ -3,11 +3,9 @@
 import * as React from "react"
 import Link from "next/link"
 import {
-  ClipboardListIcon,
-  FactoryIcon,
-  LayoutDashboardIcon,
-  PackageIcon,
-  Trash2Icon,
+  ClipboardCheckIcon,
+  RotateCcwIcon,
+  ShieldCheckIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -32,16 +30,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { clearAllData, useOrders, useProducts } from "@/lib/store"
+import { CURRENT_USER } from "@/lib/qc"
+import { resetSampleData } from "@/lib/qc-store"
 
-const NAV = [
-  { title: "Dashboard", url: "/", icon: <LayoutDashboardIcon /> },
-  { title: "Produk", url: "/produk", icon: <PackageIcon /> },
-  { title: "Daftar Order", url: "/orders", icon: <ClipboardListIcon /> },
-]
+// Menu yang boleh diakses oleh role QC.
+const QC_NAV = [{ title: "Tugas Saya", url: "/", icon: <ClipboardCheckIcon /> }]
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const hasData = useProducts().length + useOrders().length > 0
+  const user = CURRENT_USER
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -52,17 +48,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
               render={<Link href="/" />}
             >
-              <FactoryIcon className="size-5!" />
-              <span className="text-base font-semibold">
-                Monitoring Produksi
-              </span>
+              <ShieldCheckIcon className="size-5!" />
+              <span className="text-base font-semibold">Monitoring QC</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={NAV} />
+        <NavMain items={QC_NAV} />
       </SidebarContent>
 
       <SidebarFooter>
@@ -70,24 +64,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <Dialog>
               <DialogTrigger
-                disabled={!hasData}
-                render={
-                  <SidebarMenuButton
-                    tooltip="Hapus semua data"
-                    aria-disabled={!hasData}
-                    className="data-disabled:pointer-events-none data-disabled:opacity-50"
-                  />
-                }
+                render={<SidebarMenuButton tooltip="Muat ulang data contoh" />}
               >
-                <Trash2Icon />
-                <span>Hapus semua data</span>
+                <RotateCcwIcon />
+                <span>Muat ulang data contoh</span>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Hapus semua data?</DialogTitle>
+                  <DialogTitle>Muat ulang data contoh?</DialogTitle>
                   <DialogDescription>
-                    Semua produk dan order akan dihapus dari browser ini dan
-                    tidak bisa dikembalikan.
+                    Semua angka yang sudah Anda isi akan hilang dan tugas
+                    kembali seperti semula. Ini hanya untuk mencoba tampilan.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -97,24 +84,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <DialogClose
                     render={
                       <Button
-                        variant="destructive"
                         onClick={() => {
-                          clearAllData()
-                          toast.success("Semua data sudah dihapus")
+                          resetSampleData()
+                          toast.success("Data contoh dimuat ulang")
                         }}
                       />
                     }
                   >
-                    Ya, hapus semua
+                    Ya, muat ulang
                   </DialogClose>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-            {!hasData && (
-              <p className="px-2 pt-1 text-xs text-muted-foreground">
-                Aktif setelah ada data.
-              </p>
-            )}
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <div className="flex items-center gap-2 rounded-md p-2">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+                {user.name.charAt(0)}
+              </div>
+              <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  QC · {user.line}
+                </span>
+              </div>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

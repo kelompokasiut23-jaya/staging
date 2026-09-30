@@ -6,9 +6,9 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
 const TITLES: Record<string, string> = {
-  "/": "Dashboard",
-  "/produk": "Produk",
-  "/orders": "Daftar Order",
+  "/": "Tugas Saya",
+  "/tugas/": "Detail Tugas",
+  "/tugas": "Detail Tugas",
 }
 
 export function SiteHeader() {
@@ -23,7 +23,7 @@ export function SiteHeader() {
           className="mx-2 h-4 data-vertical:self-auto"
         />
         <h1 className="text-base font-medium">
-          {TITLES[pathname] ?? "Monitoring Produksi"}
+          {TITLES[pathname] ?? "Monitoring QC"}
         </h1>
       </div>
     </header>
