@@ -17,7 +17,7 @@ export function homeOf(role: Role) {
 
 function Loading() {
   return (
-    <div className="grid gap-4 px-4 py-4 md:py-6 lg:px-6">
+    <div className="grid gap-4">
       <Skeleton className="h-8 w-56" />
       <Skeleton className="h-40 w-full" />
     </div>
@@ -44,7 +44,7 @@ export function RoleGate({
   const { user } = auth
   if (!roles.includes(user.role)) {
     return (
-      <div className="px-4 py-4 md:py-6 lg:px-6">
+      <div>
         <EmptyState
           icon={LockIcon}
           title="Anda tidak punya akses ke halaman ini"

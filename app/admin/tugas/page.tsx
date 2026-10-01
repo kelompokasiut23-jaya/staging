@@ -82,7 +82,7 @@ function AdminTaskDetail({ canManage }: { canManage: boolean }) {
 
   if (!task) {
     return (
-      <div className="grid gap-4 px-4 py-4 md:py-6 lg:px-6">
+      <div className="grid gap-4">
         <BackLink />
         <EmptyState
           icon={FileSearchIcon}
@@ -98,7 +98,7 @@ function AdminTaskDetail({ canManage }: { canManage: boolean }) {
   const overdue = now > 0 && isOverdue(task, now)
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-4 md:gap-6 md:py-6 lg:px-6">
+    <div className="flex flex-col gap-4 md:gap-6">
       <BackLink />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

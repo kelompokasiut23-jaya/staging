@@ -105,8 +105,8 @@ function AdminTasks({ user }: { user: User }) {
     )
 
   return (
-    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <div className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           {canManage
             ? "Semua barang yang harus diperiksa QC. Angka lolos dan defect diperbarui oleh QC masing-masing."
@@ -124,7 +124,7 @@ function AdminTasks({ user }: { user: User }) {
       </div>
 
       {tasks.length === 0 ? (
-        <div className="px-4 lg:px-6">
+        <div>
           <EmptyState
             icon={PackagePlusIcon}
             title="Belum ada barang untuk diperiksa"
@@ -145,7 +145,7 @@ function AdminTasks({ user }: { user: User }) {
         <>
           <Summary tasks={tasks} lateCount={filters[4].count} />
 
-          <div className="flex flex-col gap-3 px-4 lg:px-6">
+          <div className="flex flex-col gap-3">
             <div className="overflow-x-auto">
               <Tabs
                 value={filter}
@@ -363,7 +363,7 @@ function Summary({ tasks, lateCount }: { tasks: QcTask[]; lateCount: number }) {
     },
   ]
   return (
-    <div className="grid grid-cols-2 gap-3 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs md:gap-4 lg:px-6 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-2 gap-3 md:gap-4 @5xl/main:grid-cols-4">
       {cards.map((c) => (
         <Card key={c.label} className="@container/card">
           <CardHeader>

@@ -62,7 +62,7 @@ export default function TaskPage() {
 
 function Loading() {
   return (
-    <div className="grid gap-4 px-4 py-4 md:py-6 lg:px-6">
+    <div className="grid gap-4">
       <Skeleton className="h-8 w-64" />
       <Skeleton className="h-40 w-full" />
       <Skeleton className="h-64 w-full" />
@@ -94,7 +94,7 @@ function TaskLoader({ user }: { user: User }) {
   // QC hanya boleh membuka tugas yang ditugaskan kepadanya.
   if (!task || task.assignedTo !== user.id) {
     return (
-      <div className="grid gap-4 px-4 py-4 md:py-6 lg:px-6">
+      <div className="grid gap-4">
         <BackLink />
         <EmptyState
           icon={FileSearchIcon}
@@ -197,7 +197,7 @@ function TaskDetail({ task }: { task: QcTask }) {
   const mobileHint = hasError ? saveHint : finishHint || saveHint
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-4 pb-36 md:gap-6 md:py-6 md:pb-6 lg:px-6">
+    <div className="flex flex-col gap-4 pb-28 md:gap-6 md:pb-0">
       <BackLink />
 
       <div className="grid gap-2">
@@ -395,7 +395,7 @@ function TaskDetail({ task }: { task: QcTask }) {
       </Card>
 
       {!locked && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-card/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
           <div className="grid grid-cols-2 gap-2 md:flex md:items-start md:gap-4">
             <div className="grid gap-1 md:flex-1">
               <Button

@@ -13,13 +13,12 @@ export function RoleShell({ children }: { children: React.ReactNode }) {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar />
       <SidebarInset className="min-w-0">
         <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            {children}
-          </div>
+        {/* Konten di tengah dengan lebar maksimum dan padding lega, tidak memenuhi layar. */}
+        <div className="@container/main mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+          {children}
         </div>
       </SidebarInset>
     </SidebarProvider>

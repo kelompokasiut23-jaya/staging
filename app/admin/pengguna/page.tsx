@@ -112,8 +112,8 @@ function Users() {
   }
 
   return (
-    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <div className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Buat akun untuk admin line dan petugas QC. Setiap orang masuk dengan
           username dan password dari Anda, lalu hanya melihat halaman sesuai
@@ -126,7 +126,7 @@ function Users() {
       </div>
 
       {users.length === 0 ? (
-        <div className="px-4 lg:px-6">
+        <div>
           <EmptyState
             icon={UsersIcon}
             title="Belum ada pengguna"
@@ -138,7 +138,7 @@ function Users() {
           </EmptyState>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 px-4 lg:px-6">
+        <div className="flex flex-col gap-3">
           <Tabs
             value={filter}
             onValueChange={(v) => setFilter(v as typeof filter)}

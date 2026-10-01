@@ -49,7 +49,7 @@ export default function LoginPage() {
   const redirecting = auth.status === "signedIn"
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-muted/40 p-4">
+    <main className="flex min-h-svh items-center justify-center bg-background p-4">
       <div className="grid w-full max-w-sm gap-6">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">

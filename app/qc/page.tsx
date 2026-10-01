@@ -58,7 +58,7 @@ function MyTasks({ user }: { user: User }) {
 
   if (tasks === null) {
     return (
-      <div className="grid gap-4 px-4 py-4 md:py-6 lg:px-6">
+      <div className="grid gap-4">
         <Skeleton className="h-8 w-56" />
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-48 w-full" />
@@ -78,8 +78,8 @@ function MyTasks({ user }: { user: User }) {
     f === "semua" ? tasks.length : tasks.filter((t) => t.status === f).length
 
   return (
-    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <div className="px-4 lg:px-6">
+    <div className="flex flex-col gap-4 md:gap-6">
+      <div>
         <h2 className="text-xl font-semibold tracking-tight">
           Halo, {user.name}
         </h2>
@@ -90,7 +90,7 @@ function MyTasks({ user }: { user: User }) {
       </div>
 
       {tasks.length === 0 ? (
-        <div className="px-4 lg:px-6">
+        <div>
           <EmptyState
             icon={InboxIcon}
             title="Belum ada tugas untuk Anda"
@@ -101,7 +101,7 @@ function MyTasks({ user }: { user: User }) {
         <>
           <Summary tasks={tasks} />
 
-          <div className="-mx-0 overflow-x-auto px-4 lg:px-6">
+          <div className="overflow-x-auto">
             <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
               <TabsList className="**:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1">
                 {FILTERS.map((f) => (
@@ -114,7 +114,7 @@ function MyTasks({ user }: { user: User }) {
             </Tabs>
           </div>
 
-          <div className="px-4 lg:px-6">
+          <div>
             {visible.length === 0 ? (
               <EmptyState
                 icon={ClipboardCheckIcon}
@@ -181,7 +181,7 @@ function Summary({ tasks }: { tasks: QcTask[] }) {
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs md:gap-4 lg:px-6 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-2 gap-3 md:gap-4 @5xl/main:grid-cols-4">
       {cards.map((c) => (
         <Card key={c.label} className="@container/card">
           <CardHeader>
