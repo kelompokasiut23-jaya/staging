@@ -19,7 +19,7 @@ export function QcTaskCard({ task, now }: { task: QcTask; now: number }) {
 
   return (
     <Link
-      href={`/tugas/?id=${task.id}`}
+      href={`/qc/tugas/?id=${task.id}`}
       className="block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <Card className="transition-colors hover:bg-muted/40">

@@ -38,7 +38,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { useNow } from "@/hooks/use-now"
 import {
-  CURRENT_USER,
   formatDateTime,
   formatNumber,
   formatPercent,
@@ -49,12 +48,14 @@ import {
   totals,
   type QcTask,
 } from "@/lib/qc"
+import { RoleGate } from "@/components/role-gate"
 import { finishTask, saveCounts, useTasks } from "@/lib/qc-store"
+import type { User } from "@/lib/qc"
 
 export default function TaskPage() {
   return (
     <Suspense fallback={<Loading />}>
-      <TaskLoader />
+      <RoleGate role="qc">{(user) => <TaskLoader user={user} />}</RoleGate>
     </Suspense>
   )
 }
@@ -75,7 +76,7 @@ function BackLink() {
       variant="ghost"
       size="sm"
       className="-ml-2 w-fit"
-      render={<Link href="/" />}
+      render={<Link href="/qc/" />}
     >
       <ArrowLeftIcon data-icon="inline-start" />
       Kembali ke Tugas Saya
@@ -83,29 +84,29 @@ function BackLink() {
   )
 }
 
-function TaskLoader() {
+function TaskLoader({ user }: { user: User }) {
   const id = useSearchParams().get("id")
   const tasks = useTasks()
 
   if (tasks === null) return <Loading />
 
   const task = tasks.find((t) => t.id === id)
-  // QC hanya boleh membuka tugas untuk line-nya sendiri.
-  if (!task || task.line !== CURRENT_USER.line) {
+  // QC hanya boleh membuka tugas yang ditugaskan kepadanya.
+  if (!task || task.assignedTo !== user.id) {
     return (
       <div className="grid gap-4 px-4 py-4 md:py-6 lg:px-6">
         <BackLink />
         <EmptyState
           icon={FileSearchIcon}
           title="Tugas tidak ditemukan"
-          description={`Tugas ini tidak ada atau bukan untuk ${CURRENT_USER.line}. Kembali ke daftar tugas untuk memilih tugas yang harus Anda periksa.`}
+          description={`Tugas ini tidak ada atau tidak ditugaskan kepada Anda. Kembali ke daftar tugas untuk memilih tugas yang harus Anda periksa.`}
         />
       </div>
     )
   }
 
   // key: form kembali ke data terbaru setiap kali tugas disimpan.
-  return <TaskDetail key={task.updatedAt} task={task} />
+  return <TaskDetail key={task.updatedAt} task={task} user={user} />
 }
 
 type Draft = Record<string, { passed: string; defect: string }>
@@ -125,8 +126,7 @@ function parse(value: string) {
   return Number.isInteger(n) && n >= 0 ? n : NaN
 }
 
-function TaskDetail({ task }: { task: QcTask }) {
-  const user = CURRENT_USER
+function TaskDetail({ task, user }: { task: QcTask; user: User }) {
   const now = useNow()
   const [draft, setDraft] = useState<Draft>(() => toDraft(task))
   const [note, setNote] = useState("")

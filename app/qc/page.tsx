@@ -17,7 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNow } from "@/hooks/use-now"
 import {
-  CURRENT_USER,
   formatDay,
   formatNumber,
   formatPercent,
@@ -25,7 +24,9 @@ import {
   type QcTask,
   type TaskStatus,
 } from "@/lib/qc"
-import { useLineTasks } from "@/lib/qc-store"
+import { RoleGate } from "@/components/role-gate"
+import { useTasks } from "@/lib/qc-store"
+import type { User } from "@/lib/qc"
 
 type Filter = "semua" | TaskStatus
 
@@ -46,8 +47,12 @@ const EMPTY_TEXT: Record<Filter, string> = {
 }
 
 export default function MyTasksPage() {
-  const user = CURRENT_USER
-  const tasks = useLineTasks(user)
+  return <RoleGate role="qc">{(user) => <MyTasks user={user} />}</RoleGate>
+}
+
+function MyTasks({ user }: { user: User }) {
+  const all = useTasks()
+  const tasks = all?.filter((t) => t.assignedTo === user.id) ?? null
   const now = useNow()
   const [filter, setFilter] = useState<Filter>("semua")
 
@@ -79,7 +84,7 @@ export default function MyTasksPage() {
           Halo, {user.name}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {now > 0 ? `${formatDay(now)} · ` : ""}Tugas QC untuk {user.line}.
+          {now > 0 ? `${formatDay(now)} · ` : ""}Tugas QC Anda di {user.line}.
           Buka sebuah tugas untuk mengisi jumlah barang yang lolos dan defect.
         </p>
       </div>
@@ -89,7 +94,7 @@ export default function MyTasksPage() {
           <EmptyState
             icon={InboxIcon}
             title="Belum ada tugas untuk Anda"
-            description={`Tugas QC untuk ${user.line} akan muncul di sini setelah admin memasukkan brand dan item yang harus diperiksa. Anda tidak perlu melakukan apa pun sampai tugas masuk.`}
+            description={`Tugas akan muncul di sini setelah admin memasukkan barang yang harus Anda periksa. Anda tidak perlu melakukan apa pun sampai tugas masuk.`}
           />
         </div>
       ) : (

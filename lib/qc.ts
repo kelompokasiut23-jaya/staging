@@ -4,8 +4,20 @@ export interface User {
   id: string
   name: string
   role: Role
+  /** Line tempat QC bertugas. Kosong untuk admin. */
   line: string
+  username: string
+  passwordHash: string
+  active: boolean
+  createdAt: string
 }
+
+export const ROLE_LABEL: Record<Role, string> = {
+  qc: "QC",
+  admin: "Admin",
+}
+
+export const LINES = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5"]
 
 export type TaskStatus = "belum" | "diperiksa" | "selesai"
 
@@ -30,13 +42,16 @@ export interface TaskLog {
   note: string
 }
 
-/** Satu target QC: satu brand + satu item + satu warna, dikerjakan di satu line. */
+/** Satu target QC: satu client + satu item + satu warna, dikerjakan oleh satu QC. */
 export interface QcTask {
   id: string
+  /** Nama client / perusahaan pemilik barang. */
   brand: string
   item: string
   color: string
   line: string
+  /** id user QC yang ditugaskan. */
+  assignedTo: string
   deadline: string
   sizes: SizeCount[]
   status: TaskStatus
@@ -143,16 +158,26 @@ export function timeLeft(deadline: string, now: number) {
   return diff >= 0 ? `${text} lagi` : `lewat ${text}`
 }
 
-// ---------------------------------------------------------------------------
-// Data contoh. Nanti diganti dengan data yang diinput admin.
-// ---------------------------------------------------------------------------
-
-export const CURRENT_USER: User = {
-  id: "USR-QC-001",
-  name: "Fathiya",
-  role: "qc",
-  line: "Line 1",
+/** Hash password sebelum disimpan, supaya password asli tidak tersimpan. */
+export async function hashPassword(password: string) {
+  const data = new TextEncoder().encode(`qc-monitor:${password}`)
+  const digest = await crypto.subtle.digest("SHA-256", data)
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
 }
+
+/** Password acak yang mudah dibacakan: tanpa huruf/angka yang mirip (l, 1, O, 0). */
+export function generatePassword(length = 8) {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789"
+  const values = crypto.getRandomValues(new Uint32Array(length))
+  return Array.from(values, (v) => chars[v % chars.length]).join("")
+}
+
+// ---------------------------------------------------------------------------
+// Data contoh. Nanti diganti dengan data dari server.
+// Akun contoh: admin / admin123, fathiya / fathiya123, rina / rina123
+// ---------------------------------------------------------------------------
 
 function inHours(now: number, hours: number) {
   const date = new Date(now + hours * 3600000)
@@ -169,15 +194,58 @@ function sizes(entries: [string, number, number?, number?][]): SizeCount[] {
   }))
 }
 
-export function createSampleTasks(now: number): QcTask[] {
+export function createSampleData(now: number): {
+  users: User[]
+  tasks: QcTask[]
+} {
   const created = new Date(now - 2 * 3600000).toISOString()
+
+  const users: User[] = [
+    {
+      id: "USR-001",
+      name: "Admin Produksi",
+      role: "admin",
+      line: "",
+      username: "admin",
+      passwordHash:
+        "f873d9054587eb3a75f1ea7a4142ba347c41e6fed94ed418ef1e468f501b46e0",
+      active: true,
+      createdAt: created,
+    },
+    {
+      id: "USR-002",
+      name: "Fathiya",
+      role: "qc",
+      line: "Line 1",
+      username: "fathiya",
+      passwordHash:
+        "e6185bf9e9be76cac7578528f94e9e44d4c8581bcb57589e0ff2f03dd47f7313",
+      active: true,
+      createdAt: created,
+    },
+    {
+      id: "USR-003",
+      name: "Rina",
+      role: "qc",
+      line: "Line 2",
+      username: "rina",
+      passwordHash:
+        "5dc1e50f8aa344de43b69225be7a962ec7d481a68b6dce5f7a7c03e5dd2caeea",
+      active: true,
+      createdAt: created,
+    },
+  ]
+
   const base = {
     note: "",
     createdBy: "Admin Produksi",
     finishedAt: null,
+    updatedAt: created,
+    logs: [],
+    status: "belum" as TaskStatus,
   }
 
-  return [
+  const tasks: QcTask[] = [
     {
       ...base,
       id: "QC-001",
@@ -185,11 +253,12 @@ export function createSampleTasks(now: number): QcTask[] {
       item: "Kaos Polo Pria",
       color: "Navy",
       line: "Line 1",
+      assignedTo: "USR-002",
       deadline: inHours(now, 2),
       sizes: sizes([
         ["S", 300, 180, 6],
         ["M", 400, 150, 4],
-        ["L", 300, 0, 0],
+        ["L", 300],
       ]),
       status: "diperiksa",
       note: "Cek jahitan kerah dan posisi logo bordir.",
@@ -211,16 +280,14 @@ export function createSampleTasks(now: number): QcTask[] {
       item: "Dress Anak Perempuan",
       color: "Merah Muda",
       line: "Line 1",
+      assignedTo: "USR-002",
       deadline: inHours(now, 4),
       sizes: sizes([
         ["S", 350],
         ["M", 350],
         ["L", 300],
       ]),
-      status: "belum",
       note: "Pastikan kancing belakang terpasang kuat.",
-      updatedAt: created,
-      logs: [],
     },
     {
       ...base,
@@ -229,18 +296,14 @@ export function createSampleTasks(now: number): QcTask[] {
       item: "Celana Chino",
       color: "Khaki",
       line: "Line 1",
+      assignedTo: "USR-002",
       deadline: inHours(now, 6),
       sizes: sizes([
         ["30", 250],
         ["32", 400],
         ["34", 350],
       ]),
-      status: "belum",
-      note: "",
-      updatedAt: created,
-      logs: [],
     },
-    // Target untuk line lain. Tidak tampil untuk QC Line 1.
     {
       ...base,
       id: "QC-004",
@@ -248,15 +311,14 @@ export function createSampleTasks(now: number): QcTask[] {
       item: "Kemeja Lengan Panjang",
       color: "Putih",
       line: "Line 2",
+      assignedTo: "USR-003",
       deadline: inHours(now, 3),
       sizes: sizes([
         ["M", 500],
         ["L", 500],
       ]),
-      status: "belum",
-      note: "",
-      updatedAt: created,
-      logs: [],
     },
   ]
+
+  return { users, tasks }
 }
