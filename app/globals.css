@@ -49,7 +49,7 @@
 
 :root {
     /* Gaya dashboard: kanvas abu-abu muda, kartu putih, aksi utama biru. */
-    --background: oklch(0.961 0 0);
+    --background: oklch(0.979 0 0); /* #f8f8f8 */
     --foreground: oklch(0.255 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.255 0 0);
