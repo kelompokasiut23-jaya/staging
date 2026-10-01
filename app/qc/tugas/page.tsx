@@ -55,7 +55,7 @@ import type { User } from "@/lib/qc"
 export default function TaskPage() {
   return (
     <Suspense fallback={<Loading />}>
-      <RoleGate role="qc">{(user) => <TaskLoader user={user} />}</RoleGate>
+      <RoleGate roles={["qc"]}>{(user) => <TaskLoader user={user} />}</RoleGate>
     </Suspense>
   )
 }
@@ -106,7 +106,7 @@ function TaskLoader({ user }: { user: User }) {
   }
 
   // key: form kembali ke data terbaru setiap kali tugas disimpan.
-  return <TaskDetail key={task.updatedAt} task={task} user={user} />
+  return <TaskDetail key={task.updatedAt} task={task} />
 }
 
 type Draft = Record<string, { passed: string; defect: string }>
@@ -126,11 +126,12 @@ function parse(value: string) {
   return Number.isInteger(n) && n >= 0 ? n : NaN
 }
 
-function TaskDetail({ task, user }: { task: QcTask; user: User }) {
+function TaskDetail({ task }: { task: QcTask }) {
   const now = useNow()
   const [draft, setDraft] = useState<Draft>(() => toDraft(task))
   const [note, setNote] = useState("")
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   const locked = task.status === "selesai"
   const overdue = now > 0 && isOverdue(task, now)
@@ -161,24 +162,30 @@ function TaskDetail({ task, user }: { task: QcTask; user: User }) {
     setDraft((d) => ({ ...d, [size]: { ...d[size], [field]: value } }))
   }
 
-  function save() {
-    saveCounts(
+  async function save() {
+    setBusy(true)
+    const error = await saveCounts(
       task.id,
-      user,
       rows.map((r) => ({ size: r.size, passed: r.passed, defect: r.defect })),
       note.trim()
     )
+    setBusy(false)
+    if (error) return toast.error(error)
     toast.success("Hasil pemeriksaan disimpan")
   }
 
-  function finish() {
-    finishTask(task.id, user, note.trim())
+  async function finish() {
+    setBusy(true)
+    const error = await finishTask(task.id, note.trim())
+    setBusy(false)
     setConfirmOpen(false)
+    if (error) return toast.error(error)
     toast.success("Tugas selesai. Laporan sudah terkirim ke admin.")
   }
 
   let saveHint = ""
-  if (hasError) saveHint = "Perbaiki angka yang ditandai merah dulu."
+  if (busy) saveHint = "Sedang menyimpan..."
+  else if (hasError) saveHint = "Perbaiki angka yang ditandai merah dulu."
   else if (!changed && !note.trim())
     saveHint = "Belum ada perubahan untuk disimpan."
 
@@ -450,7 +457,9 @@ function TaskDetail({ task, user }: { task: QcTask; user: User }) {
             <DialogClose render={<Button variant="outline" />}>
               Periksa lagi
             </DialogClose>
-            <Button onClick={finish}>Ya, tandai selesai</Button>
+            <Button onClick={finish} disabled={busy}>
+              Ya, tandai selesai
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

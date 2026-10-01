@@ -9,5 +9,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <RoleShell role="admin">{children}</RoleShell>
+  return <RoleShell>{children}</RoleShell>
 }

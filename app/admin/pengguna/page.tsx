@@ -33,18 +33,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { LINES, generatePassword, type User } from "@/lib/qc"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LINES, ROLE_LABEL, generatePassword, type User } from "@/lib/qc"
 import {
-  addQcUser,
-  isUsernameTaken,
-  setPassword,
+  createUser,
   setUserActive,
+  setUserPassword,
   useTasks,
   useUsers,
 } from "@/lib/qc-store"
 
-export default function QcUsersPage() {
-  return <RoleGate role="admin">{() => <QcUsers />}</RoleGate>
+export default function UsersPage() {
+  return <RoleGate roles={["super_admin"]}>{() => <Users />}</RoleGate>
+}
+
+type NewRole = "admin" | "qc"
+
+const ROLE_HELP: Record<NewRole, string> = {
+  admin:
+    "Penanggung jawab line. Hanya bisa melihat barang dan hasil QC di line-nya, tidak bisa mengubah apa pun.",
+  qc: "Petugas pemeriksa. Hanya melihat barang yang ditugaskan kepadanya, lalu mengisi lolos dan defect.",
 }
 
 interface Credentials {
@@ -54,18 +62,35 @@ interface Credentials {
   isNew: boolean
 }
 
-function QcUsers() {
-  const users = (useUsers() ?? []).filter((u) => u.role === "qc")
+function Users() {
+  const users = (useUsers() ?? []).filter((u) => u.role !== "super_admin")
   const tasks = useTasks() ?? []
+  const [filter, setFilter] = useState<"semua" | NewRole>("semua")
   const [addOpen, setAddOpen] = useState(false)
   const [credentials, setCredentials] = useState<Credentials | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
 
   const openTasks = (u: User) =>
-    tasks.filter((t) => t.assignedTo === u.id && t.status !== "selesai").length
+    u.role === "qc"
+      ? tasks.filter((t) => t.assignedTo === u.id && t.status !== "selesai")
+          .length
+      : 0
+
+  const visible = users
+    .filter((u) => filter === "semua" || u.role === filter)
+    .sort(
+      (a, b) =>
+        a.line.localeCompare(b.line) ||
+        a.role.localeCompare(b.role) ||
+        a.name.localeCompare(b.name)
+    )
 
   async function resetPassword(user: User) {
+    setBusyId(user.id)
     const password = generatePassword()
-    await setPassword(user.id, password)
+    const error = await setUserPassword(user.id, password)
+    setBusyId(null)
+    if (error) return toast.error(error)
     setCredentials({
       name: user.name,
       username: user.username,
@@ -74,32 +99,65 @@ function QcUsers() {
     })
   }
 
+  async function toggleActive(user: User) {
+    setBusyId(user.id)
+    const error = await setUserActive(user.id, !user.active)
+    setBusyId(null)
+    if (error) return toast.error(error)
+    toast.success(
+      user.active
+        ? `${user.name} tidak bisa masuk lagi`
+        : `${user.name} bisa masuk lagi`
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
       <div className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
         <p className="text-sm text-muted-foreground">
-          Akun untuk petugas QC. Setiap QC masuk dengan username dan password
-          dari Anda, lalu hanya melihat barang yang ditugaskan kepadanya.
+          Buat akun untuk admin line dan petugas QC. Setiap orang masuk dengan
+          username dan password dari Anda, lalu hanya melihat halaman sesuai
+          role-nya.
         </p>
         <Button onClick={() => setAddOpen(true)} className="w-full sm:w-auto">
           <UserPlusIcon data-icon="inline-start" />
-          Tambah QC
+          Tambah pengguna
         </Button>
       </div>
 
-      <div className="px-4 lg:px-6">
-        {users.length === 0 ? (
+      {users.length === 0 ? (
+        <div className="px-4 lg:px-6">
           <EmptyState
             icon={UsersIcon}
-            title="Belum ada akun QC"
-            description="Tambahkan petugas QC beserta line tempat ia bertugas. Anda akan mendapat username dan password untuk diberikan kepadanya."
+            title="Belum ada pengguna"
+            description="Mulai dengan menambahkan petugas QC. Barang hanya bisa ditambahkan setelah ada QC yang bisa ditugaskan."
           >
-            <Button onClick={() => setAddOpen(true)}>Tambah QC pertama</Button>
+            <Button onClick={() => setAddOpen(true)}>
+              Tambah pengguna pertama
+            </Button>
           </EmptyState>
-        ) : (
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 px-4 lg:px-6">
+          <Tabs
+            value={filter}
+            onValueChange={(v) => setFilter(v as typeof filter)}
+          >
+            <TabsList>
+              <TabsTrigger value="semua">Semua ({users.length})</TabsTrigger>
+              <TabsTrigger value="admin">
+                Admin ({users.filter((u) => u.role === "admin").length})
+              </TabsTrigger>
+              <TabsTrigger value="qc">
+                QC ({users.filter((u) => u.role === "qc").length})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           <ul className="grid gap-3 @3xl/main:grid-cols-2">
-            {users.map((u) => {
+            {visible.map((u) => {
               const open = openTasks(u)
+              const busy = busyId === u.id
               return (
                 <li key={u.id}>
                   <Card size="sm" className={u.active ? "" : "opacity-70"}>
@@ -111,6 +169,9 @@ function QcUsers() {
                         <div className="min-w-0 flex-1">
                           <p className="flex flex-wrap items-center gap-1.5 font-medium">
                             {u.name}
+                            <Badge variant="secondary">
+                              {ROLE_LABEL[u.role]}
+                            </Badge>
                             {!u.active && (
                               <Badge variant="outline">Nonaktif</Badge>
                             )}
@@ -119,11 +180,13 @@ function QcUsers() {
                             {u.line} · username{" "}
                             <span className="font-mono">{u.username}</span>
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {open > 0
-                              ? `${open} tugas belum selesai`
-                              : "Tidak ada tugas berjalan"}
-                          </p>
+                          {u.role === "qc" && (
+                            <p className="text-xs text-muted-foreground">
+                              {open > 0
+                                ? `${open} tugas belum selesai`
+                                : "Tidak ada tugas berjalan"}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -131,7 +194,7 @@ function QcUsers() {
                           variant="outline"
                           size="sm"
                           onClick={() => resetPassword(u)}
-                          disabled={!u.active}
+                          disabled={!u.active || busy}
                         >
                           <KeyRoundIcon data-icon="inline-start" />
                           Buat password baru
@@ -139,15 +202,8 @@ function QcUsers() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={u.active && open > 0}
-                          onClick={() => {
-                            setUserActive(u.id, !u.active)
-                            toast.success(
-                              u.active
-                                ? `${u.name} tidak bisa masuk lagi`
-                                : `${u.name} bisa masuk lagi`
-                            )
-                          }}
+                          disabled={(u.active && open > 0) || busy}
+                          onClick={() => toggleActive(u)}
                         >
                           {u.active ? "Nonaktifkan" : "Aktifkan lagi"}
                         </Button>
@@ -164,13 +220,14 @@ function QcUsers() {
               )
             })}
           </ul>
-        )}
-      </div>
+        </div>
+      )}
 
-      <AddQcDialog
+      <AddUserDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        onCreated={(c) => setCredentials(c)}
+        usernames={users.map((u) => u.username)}
+        onCreated={setCredentials}
       />
       <CredentialsDialog
         credentials={credentials}
@@ -188,32 +245,38 @@ function suggestUsername(name: string) {
     .replace(/^\.+|\.+$/g, "")
 }
 
-function AddQcDialog({
+function AddUserDialog({
   open,
   onOpenChange,
+  usernames,
   onCreated,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  usernames: string[]
   onCreated: (c: Credentials) => void
 }) {
   const [name, setName] = useState("")
+  const [role, setRole] = useState<NewRole | "">("")
   const [line, setLine] = useState("")
   const [username, setUsername] = useState("")
   const [usernameEdited, setUsernameEdited] = useState(false)
-  const [password, setPasswordValue] = useState("")
+  const [password, setPassword] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [serverError, setServerError] = useState("")
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next)
     if (next) {
       setName("")
+      setRole("")
       setLine("")
       setUsername("")
       setUsernameEdited(false)
-      setPasswordValue(generatePassword())
+      setPassword(generatePassword())
       setSubmitted(false)
+      setServerError("")
     }
   }
 
@@ -221,40 +284,49 @@ function AddQcDialog({
   const u = username.trim().toLowerCase()
   const next: Record<string, string> = {}
   if (!name.trim()) next.name = "Nama wajib diisi"
-  if (!line) next.line = "Pilih line tempat QC bertugas"
+  if (!role) next.role = "Pilih role"
+  if (!line) next.line = "Pilih line"
   if (!/^[a-z0-9._]{3,}$/.test(u))
     next.username =
       "Minimal 3 karakter: huruf kecil, angka, titik, atau garis bawah"
-  else if (isUsernameTaken(u)) next.username = "Username ini sudah dipakai"
+  else if (usernames.includes(u)) next.username = "Username ini sudah dipakai"
   if (password.length < 6) next.password = "Password minimal 6 karakter"
   const errors = submitted && !saving ? next : {}
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setSubmitted(true)
-    if (Object.keys(next).length > 0) return
+    setServerError("")
+    if (Object.keys(next).length > 0 || !role) return
 
     setSaving(true)
-    await addQcUser({ name: name.trim(), line, username: u, password })
+    const error = await createUser({
+      name: name.trim(),
+      username: u,
+      role,
+      line,
+      password,
+    })
     setSaving(false)
+    if (error) return setServerError(error)
     onOpenChange(false)
     onCreated({ name: name.trim(), username: u, password, isNew: true })
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Tambah QC</DialogTitle>
+          <DialogTitle>Tambah pengguna</DialogTitle>
           <DialogDescription>
-            Setelah disimpan, berikan username dan password ini kepada petugas
-            QC.
+            Setelah disimpan, berikan username dan password kepada orang
+            tersebut.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} noValidate className="grid gap-4">
-          <Field label="Nama lengkap" htmlFor="qc-name" error={errors.name}>
+          <Field label="Nama lengkap" htmlFor="user-name" error={errors.name}>
             <Input
-              id="qc-name"
+              id="user-name"
               placeholder="Contoh: Siti Aminah"
               value={name}
               onChange={(e) => {
@@ -265,14 +337,41 @@ function AddQcDialog({
               aria-invalid={!!errors.name}
             />
           </Field>
-          <Field label="Bertugas di" htmlFor="qc-line" error={errors.line}>
+          <Field label="Role" htmlFor="user-role" error={errors.role}>
+            <Select
+              value={role || null}
+              items={[
+                { value: "qc", label: "QC" },
+                { value: "admin", label: "Admin" },
+              ]}
+              onValueChange={(v) => v && setRole(v as NewRole)}
+            >
+              <SelectTrigger
+                id="user-role"
+                className="w-full"
+                aria-invalid={!!errors.role}
+              >
+                <SelectValue placeholder="Pilih role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="qc">QC</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+            {role && <DisabledReason>{ROLE_HELP[role]}</DisabledReason>}
+          </Field>
+          <Field
+            label={role === "admin" ? "Line yang diawasi" : "Bertugas di"}
+            htmlFor="user-line"
+            error={errors.line}
+          >
             <Select
               value={line || null}
               items={LINES.map((l) => ({ value: l, label: l }))}
               onValueChange={(v) => v && setLine(v)}
             >
               <SelectTrigger
-                id="qc-line"
+                id="user-line"
                 className="w-full"
                 aria-invalid={!!errors.line}
               >
@@ -287,9 +386,13 @@ function AddQcDialog({
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Username" htmlFor="qc-username" error={errors.username}>
+          <Field
+            label="Username"
+            htmlFor="user-username"
+            error={errors.username}
+          >
             <Input
-              id="qc-username"
+              id="user-username"
               autoCapitalize="none"
               autoComplete="off"
               value={username}
@@ -300,14 +403,18 @@ function AddQcDialog({
               aria-invalid={!!errors.username}
             />
           </Field>
-          <Field label="Password" htmlFor="qc-password" error={errors.password}>
+          <Field
+            label="Password"
+            htmlFor="user-password"
+            error={errors.password}
+          >
             <div className="flex gap-2">
               <Input
-                id="qc-password"
+                id="user-password"
                 autoComplete="off"
                 className="font-mono"
                 value={password}
-                onChange={(e) => setPasswordValue(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={!!errors.password}
               />
               <Button
@@ -315,18 +422,21 @@ function AddQcDialog({
                 variant="outline"
                 size="icon"
                 aria-label="Buat password acak"
-                onClick={() => setPasswordValue(generatePassword())}
+                onClick={() => setPassword(generatePassword())}
               >
                 <RefreshCwIcon />
               </Button>
             </div>
           </Field>
+          {serverError && (
+            <p className="text-sm text-destructive">{serverError}</p>
+          )}
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
               Batal
             </DialogClose>
             <Button type="submit" disabled={saving}>
-              Simpan akun
+              {saving ? "Menyimpan..." : "Simpan akun"}
             </Button>
           </DialogFooter>
         </form>
@@ -344,7 +454,7 @@ function CredentialsDialog({
 }) {
   async function copy() {
     if (!credentials) return
-    const text = `Akun QC ${credentials.name}\nUsername: ${credentials.username}\nPassword: ${credentials.password}`
+    const text = `Akun ${credentials.name}\nUsername: ${credentials.username}\nPassword: ${credentials.password}`
     try {
       await navigator.clipboard.writeText(text)
       toast.success("Disalin")
@@ -364,7 +474,7 @@ function CredentialsDialog({
             <DialogHeader>
               <DialogTitle>
                 {credentials.isNew
-                  ? "Akun QC sudah dibuat"
+                  ? "Akun sudah dibuat"
                   : "Password baru sudah dibuat"}
               </DialogTitle>
               <DialogDescription>

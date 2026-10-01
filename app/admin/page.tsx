@@ -37,16 +37,22 @@ import {
   totals,
   type QcTask,
   type TaskStatus,
+  type User,
 } from "@/lib/qc"
 import { useTasks, useUsers } from "@/lib/qc-store"
 
 type Filter = "semua" | TaskStatus | "terlambat"
 
 export default function AdminTasksPage() {
-  return <RoleGate role="admin">{() => <AdminTasks />}</RoleGate>
+  return (
+    <RoleGate roles={["super_admin", "admin"]}>
+      {(user) => <AdminTasks user={user} />}
+    </RoleGate>
+  )
 }
 
-function AdminTasks() {
+function AdminTasks({ user }: { user: User }) {
+  const canManage = user.role === "super_admin"
   const tasks = useTasks() ?? []
   const users = useUsers() ?? []
   const now = useNow()
@@ -102,16 +108,19 @@ function AdminTasks() {
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
       <div className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
         <p className="text-sm text-muted-foreground">
-          Semua barang yang harus diperiksa QC. Angka lolos dan defect
-          diperbarui oleh QC masing-masing.
+          {canManage
+            ? "Semua barang yang harus diperiksa QC. Angka lolos dan defect diperbarui oleh QC masing-masing."
+            : `Barang dan hasil QC di ${user.line}. Angka lolos dan defect diperbarui oleh QC masing-masing.`}
         </p>
-        <Button
-          render={<Link href="/admin/tugas/baru/" />}
-          className="w-full sm:w-auto"
-        >
-          <PackagePlusIcon data-icon="inline-start" />
-          Tambah barang
-        </Button>
+        {canManage && (
+          <Button
+            render={<Link href="/admin/tugas/baru/" />}
+            className="w-full sm:w-auto"
+          >
+            <PackagePlusIcon data-icon="inline-start" />
+            Tambah barang
+          </Button>
+        )}
       </div>
 
       {tasks.length === 0 ? (
@@ -119,11 +128,17 @@ function AdminTasks() {
           <EmptyState
             icon={PackagePlusIcon}
             title="Belum ada barang untuk diperiksa"
-            description="Tambahkan barang yang masuk: nama client, item, warna, jumlah per ukuran, dan QC yang akan memeriksanya. Barang langsung muncul di halaman QC tersebut."
+            description={
+              canManage
+                ? "Tambahkan barang yang masuk: nama client, item, warna, jumlah per ukuran, dan QC yang akan memeriksanya. Barang langsung muncul di halaman QC tersebut."
+                : `Belum ada barang untuk ${user.line}. Barang akan muncul di sini setelah super admin menambahkannya.`
+            }
           >
-            <Button render={<Link href="/admin/tugas/baru/" />}>
-              Tambah barang pertama
-            </Button>
+            {canManage && (
+              <Button render={<Link href="/admin/tugas/baru/" />}>
+                Tambah barang pertama
+              </Button>
+            )}
           </EmptyState>
         </div>
       ) : (

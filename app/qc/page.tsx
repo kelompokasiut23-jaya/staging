@@ -47,7 +47,7 @@ const EMPTY_TEXT: Record<Filter, string> = {
 }
 
 export default function MyTasksPage() {
-  return <RoleGate role="qc">{(user) => <MyTasks user={user} />}</RoleGate>
+  return <RoleGate roles={["qc"]}>{(user) => <MyTasks user={user} />}</RoleGate>
 }
 
 function MyTasks({ user }: { user: User }) {

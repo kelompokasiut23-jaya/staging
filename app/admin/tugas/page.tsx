@@ -51,7 +51,9 @@ import { deleteTask, useTasks, useUsers } from "@/lib/qc-store"
 export default function AdminTaskPage() {
   return (
     <Suspense>
-      <RoleGate role="admin">{() => <AdminTaskDetail />}</RoleGate>
+      <RoleGate roles={["super_admin", "admin"]}>
+        {(user) => <AdminTaskDetail canManage={user.role === "super_admin"} />}
+      </RoleGate>
     </Suspense>
   )
 }
@@ -70,7 +72,7 @@ function BackLink() {
   )
 }
 
-function AdminTaskDetail() {
+function AdminTaskDetail({ canManage }: { canManage: boolean }) {
   const router = useRouter()
   const id = useSearchParams().get("id")
   const tasks = useTasks() ?? []
@@ -111,46 +113,51 @@ function AdminTaskDetail() {
           </div>
         </div>
 
-        <div className="grid gap-1 sm:justify-items-end">
-          <Dialog>
-            <DialogTrigger
-              disabled={task.status !== "belum"}
-              render={<Button variant="outline" className="w-full sm:w-auto" />}
-            >
-              <Trash2Icon data-icon="inline-start" />
-              Hapus barang
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Hapus {task.item}?</DialogTitle>
-                <DialogDescription>
-                  Barang ini akan hilang dari halaman {qc?.name ?? "QC"}.
-                  Tindakan ini tidak bisa dibatalkan.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <DialogClose render={<Button variant="outline" />}>
-                  Batal
-                </DialogClose>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    deleteTask(task.id)
-                    toast.success("Barang dihapus")
-                    router.push("/admin/")
-                  }}
-                >
-                  Ya, hapus
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          {task.status !== "belum" && (
-            <DisabledReason className="sm:text-right">
-              Tidak bisa dihapus karena QC sudah mulai memeriksa.
-            </DisabledReason>
-          )}
-        </div>
+        {canManage && (
+          <div className="grid gap-1 sm:justify-items-end">
+            <Dialog>
+              <DialogTrigger
+                disabled={task.status !== "belum"}
+                render={
+                  <Button variant="outline" className="w-full sm:w-auto" />
+                }
+              >
+                <Trash2Icon data-icon="inline-start" />
+                Hapus barang
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Hapus {task.item}?</DialogTitle>
+                  <DialogDescription>
+                    Barang ini akan hilang dari halaman {qc?.name ?? "QC"}.
+                    Tindakan ini tidak bisa dibatalkan.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose render={<Button variant="outline" />}>
+                    Batal
+                  </DialogClose>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      const error = await deleteTask(task.id)
+                      if (error) return toast.error(error)
+                      toast.success("Barang dihapus")
+                      router.push("/admin/")
+                    }}
+                  >
+                    Ya, hapus
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            {task.status !== "belum" && (
+              <DisabledReason className="sm:text-right">
+                Tidak bisa dihapus karena QC sudah mulai memeriksa.
+              </DisabledReason>
+            )}
+          </div>
+        )}
       </div>
 
       <Card>

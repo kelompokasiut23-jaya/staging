@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Fungsi server Supabase berjalan di Deno, bukan bagian dari aplikasi web.
+    "supabase/**",
   ]),
 ]);
 

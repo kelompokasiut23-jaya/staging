@@ -1,16 +1,9 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import type { Role } from "@/lib/qc"
 
-/** Kerangka halaman (sidebar + header) untuk satu role. */
-export function RoleShell({
-  role,
-  children,
-}: {
-  role: Role
-  children: React.ReactNode
-}) {
+/** Kerangka halaman (sidebar + header) setelah login. */
+export function RoleShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider
       style={
@@ -20,7 +13,7 @@ export function RoleShell({
         } as React.CSSProperties
       }
     >
-      <AppSidebar role={role} variant="inset" />
+      <AppSidebar variant="inset" />
       <SidebarInset className="min-w-0">
         <SiteHeader />
         <div className="flex flex-1 flex-col">

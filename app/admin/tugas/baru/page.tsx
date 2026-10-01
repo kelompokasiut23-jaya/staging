@@ -26,13 +26,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { formatNumber, type User } from "@/lib/qc"
+import { formatNumber } from "@/lib/qc"
 import { addTask, useTasks, useUsers } from "@/lib/qc-store"
 
 export default function NewTaskPage() {
-  return (
-    <RoleGate role="admin">{(admin) => <NewTaskForm admin={admin} />}</RoleGate>
-  )
+  return <RoleGate roles={["super_admin"]}>{() => <NewTaskForm />}</RoleGate>
 }
 
 interface SizeRow {
@@ -54,7 +52,7 @@ function todayInJakarta() {
   )
 }
 
-function NewTaskForm({ admin }: { admin: User }) {
+function NewTaskForm() {
   const router = useRouter()
   const users = useUsers() ?? []
   const tasks = useTasks() ?? []
@@ -75,6 +73,7 @@ function NewTaskForm({ admin }: { admin: User }) {
   ])
   const [submitted, setSubmitted] = useState(false)
   const [saveError, setSaveError] = useState("")
+  const [saving, setSaving] = useState(false)
 
   const qc = qcUsers.find((u) => u.id === assignedTo)
   const qcItems = qcUsers.map((u) => ({
@@ -130,26 +129,25 @@ function NewTaskForm({ admin }: { admin: User }) {
     ? { ...liveErrors, ...(saveError ? { assignedTo: saveError } : {}) }
     : {}
 
-  function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault()
     setSubmitted(true)
     setSaveError("")
     if (Object.keys(liveErrors).length > 0 || !qc) return
 
-    const task = addTask(
-      {
-        brand: brand.trim(),
-        item: item.trim(),
-        color: color.trim(),
-        assignedTo: qc.id,
-        deadline: new Date(`${date}T${time}:00+07:00`).toISOString(),
-        sizes,
-        note: note.trim(),
-      },
-      admin
-    )
+    setSaving(true)
+    const { task, error } = await addTask({
+      brand: brand.trim(),
+      item: item.trim(),
+      color: color.trim(),
+      assignedTo: qc.id,
+      deadline: new Date(`${date}T${time}:00+07:00`).toISOString(),
+      sizes,
+      note: note.trim(),
+    })
+    setSaving(false)
     if (!task) {
-      setSaveError("QC tidak ditemukan, pilih ulang")
+      setSaveError(error ?? "Gagal menyimpan, coba lagi")
       return
     }
     toast.success(`${task.brand} · ${task.item} dikirim ke ${qc.name}`)
@@ -172,9 +170,11 @@ function NewTaskForm({ admin }: { admin: User }) {
         <EmptyState
           icon={UserPlusIcon}
           title="Belum ada QC yang bisa ditugaskan"
-          description="Setiap barang harus diperiksa oleh satu QC. Tambahkan akun QC dulu di menu Pengguna QC, lalu kembali ke sini."
+          description="Setiap barang harus diperiksa oleh satu QC. Tambahkan akun QC dulu di menu Pengguna, lalu kembali ke sini."
         >
-          <Button render={<Link href="/admin/qc/" />}>Buka Pengguna QC</Button>
+          <Button render={<Link href="/admin/pengguna/" />}>
+            Buka Pengguna
+          </Button>
         </EmptyState>
       ) : (
         <form onSubmit={submit} noValidate className="grid gap-4 md:gap-6">
@@ -389,7 +389,9 @@ function NewTaskForm({ admin }: { admin: User }) {
             >
               Batal
             </Button>
-            <Button type="submit">Simpan dan kirim ke QC</Button>
+            <Button type="submit" disabled={saving}>
+              Simpan dan kirim ke QC
+            </Button>
           </div>
         </form>
       )}
