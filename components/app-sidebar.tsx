@@ -5,7 +5,6 @@ import Link from "next/link"
 import {
   ClipboardCheckIcon,
   ListChecksIcon,
-  PackagePlusIcon,
   RotateCcwIcon,
   ShieldCheckIcon,
   UsersIcon,
@@ -51,12 +50,7 @@ const NAV: Record<Role, NavItem[]> = {
       title: "Daftar Barang",
       url: "/admin/",
       icon: <ListChecksIcon />,
-      also: ["/admin/tugas"],
-    },
-    {
-      title: "Tambah Barang",
-      url: "/admin/tugas/baru/",
-      icon: <PackagePlusIcon />,
+      also: ["/admin/tugas", "/admin/tugas/baru"],
     },
     { title: "Pengguna QC", url: "/admin/qc/", icon: <UsersIcon /> },
   ],
