@@ -59,7 +59,12 @@ function AdminTasks({ user }: { user: User }) {
   const [filter, setFilter] = useState<Filter>("semua")
   const [query, setQuery] = useState("")
 
-  const nameOf = (id: string) => users.find((u) => u.id === id)?.name ?? "-"
+  // Nama QC aktif di setiap line, untuk ditampilkan di samping nama line.
+  const qcOf = (line: string) =>
+    users
+      .filter((u) => u.role === "qc" && u.active && u.line === line)
+      .map((u) => u.name)
+      .join(", ") || "Belum ada QC"
   const late = (t: QcTask) => now > 0 && isOverdue(t, now)
 
   const filters: { value: Filter; label: string; count: number }[] = [
@@ -99,8 +104,8 @@ function AdminTasks({ user }: { user: User }) {
     .filter(
       (t) =>
         !q ||
-        [t.id, t.brand, t.item, t.color, t.line, nameOf(t.assignedTo)].some(
-          (v) => v.toLowerCase().includes(q)
+        [t.id, t.brand, t.item, t.color, t.line, qcOf(t.line)].some((v) =>
+          v.toLowerCase().includes(q)
         )
     )
 
@@ -183,7 +188,7 @@ function AdminTasks({ user }: { user: User }) {
                     <TableHeader className="bg-muted">
                       <TableRow>
                         <TableHead>Client / Item</TableHead>
-                        <TableHead>QC</TableHead>
+                        <TableHead>Line</TableHead>
                         <TableHead>Batas selesai</TableHead>
                         <TableHead className="w-52">Diperiksa</TableHead>
                         <TableHead className="text-right">Lolos</TableHead>
@@ -197,7 +202,7 @@ function AdminTasks({ user }: { user: User }) {
                         <Row
                           key={t.id}
                           task={t}
-                          qc={nameOf(t.assignedTo)}
+                          qc={qcOf(t.line)}
                           late={late(t)}
                         />
                       ))}
@@ -209,7 +214,7 @@ function AdminTasks({ user }: { user: User }) {
                     <MobileCard
                       key={t.id}
                       task={t}
-                      qc={nameOf(t.assignedTo)}
+                      qc={qcOf(t.line)}
                       late={late(t)}
                     />
                   ))}
@@ -241,8 +246,8 @@ function Row({ task, qc, late }: { task: QcTask; qc: string; late: boolean }) {
         </Link>
       </TableCell>
       <TableCell>
-        <span className="block">{qc}</span>
-        <span className="block text-xs text-muted-foreground">{task.line}</span>
+        <span className="block">{task.line}</span>
+        <span className="block text-xs text-muted-foreground">{qc}</span>
       </TableCell>
       <TableCell className="whitespace-nowrap">
         {formatTime(task.deadline)}
@@ -313,7 +318,7 @@ function MobileCard({
               <Progress value={t.percent} aria-label="Progres pemeriksaan" />
             </div>
             <p className="text-xs text-muted-foreground">
-              {qc} · {task.line} · Batas {formatTime(task.deadline)} · Lolos{" "}
+              {task.line} ({qc}) · Batas {formatTime(task.deadline)} · Lolos{" "}
               {formatNumber(t.passed)} · Defect {formatNumber(t.defect)}
             </p>
           </CardContent>

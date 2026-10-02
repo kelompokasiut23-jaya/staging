@@ -52,13 +52,16 @@ Deno.serve(async (req) => {
     const name = String(body.name ?? "").trim()
     const username = String(body.username ?? "").trim().toLowerCase()
     const role = String(body.role ?? "")
-    const line = String(body.line ?? "").trim()
+    const line = String(body.line ?? "").trim() || null
     const password = String(body.password ?? "")
 
     if (!name) return reply(400, { error: "Nama wajib diisi" })
     if (!/^[a-z0-9._]{3,}$/.test(username)) return reply(400, { error: "Username tidak valid" })
     if (!ROLES.includes(role)) return reply(400, { error: "Role tidak valid" })
-    if (!line) return reply(400, { error: "Line wajib dipilih" })
+    if (line) {
+      const { data: found } = await service.from("lines").select("name").eq("name", line).maybeSingle()
+      if (!found) return reply(400, { error: "Line tidak ditemukan" })
+    }
     if (password.length < 6) return reply(400, { error: "Password minimal 6 karakter" })
 
     const { data: taken } = await service
@@ -106,16 +109,6 @@ Deno.serve(async (req) => {
 
   if (action === "set_active") {
     const active = Boolean(body.active)
-    if (!active && target.role === "qc") {
-      const { count } = await service
-        .from("tasks")
-        .select("id", { count: "exact", head: true })
-        .eq("assigned_to", userId)
-        .neq("status", "selesai")
-      if ((count ?? 0) > 0) {
-        return reply(409, { error: `${target.name} masih punya ${count} tugas belum selesai` })
-      }
-    }
     const { error } = await service.auth.admin.updateUserById(userId, {
       ban_duration: active ? "none" : "876000h",
     })

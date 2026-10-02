@@ -34,12 +34,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LINES, ROLE_LABEL, generatePassword, type User } from "@/lib/qc"
+import { ROLE_LABEL, generatePassword, type User } from "@/lib/qc"
 import {
   createUser,
   setUserActive,
   setUserPassword,
-  useTasks,
+  useLines,
   useUsers,
 } from "@/lib/qc-store"
 
@@ -64,17 +64,11 @@ interface Credentials {
 
 function Users() {
   const users = (useUsers() ?? []).filter((u) => u.role !== "super_admin")
-  const tasks = useTasks() ?? []
+  const lines = (useLines() ?? []).map((l) => l.name)
   const [filter, setFilter] = useState<"semua" | NewRole>("semua")
   const [addOpen, setAddOpen] = useState(false)
   const [credentials, setCredentials] = useState<Credentials | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
-
-  const openTasks = (u: User) =>
-    u.role === "qc"
-      ? tasks.filter((t) => t.assignedTo === u.id && t.status !== "selesai")
-          .length
-      : 0
 
   const visible = users
     .filter((u) => filter === "semua" || u.role === filter)
@@ -156,7 +150,6 @@ function Users() {
 
           <ul className="grid gap-3 @3xl/main:grid-cols-2">
             {visible.map((u) => {
-              const open = openTasks(u)
               const busy = busyId === u.id
               return (
                 <li key={u.id}>
@@ -177,16 +170,9 @@ function Users() {
                             )}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {u.line} · username{" "}
+                            {u.line || "Belum ditempatkan di line"} · username{" "}
                             <span className="font-mono">{u.username}</span>
                           </p>
-                          {u.role === "qc" && (
-                            <p className="text-xs text-muted-foreground">
-                              {open > 0
-                                ? `${open} tugas belum selesai`
-                                : "Tidak ada tugas berjalan"}
-                            </p>
-                          )}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -202,18 +188,12 @@ function Users() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={(u.active && open > 0) || busy}
+                          disabled={busy}
                           onClick={() => toggleActive(u)}
                         >
                           {u.active ? "Nonaktifkan" : "Aktifkan lagi"}
                         </Button>
                       </div>
-                      {u.active && open > 0 && (
-                        <DisabledReason>
-                          Belum bisa dinonaktifkan karena masih punya {open}{" "}
-                          tugas belum selesai.
-                        </DisabledReason>
-                      )}
                     </CardContent>
                   </Card>
                 </li>
@@ -227,6 +207,7 @@ function Users() {
         open={addOpen}
         onOpenChange={setAddOpen}
         usernames={users.map((u) => u.username)}
+        lines={lines}
         onCreated={setCredentials}
       />
       <CredentialsDialog
@@ -245,15 +226,19 @@ function suggestUsername(name: string) {
     .replace(/^\.+|\.+$/g, "")
 }
 
+const NO_LINE = "__tanpa_line__"
+
 function AddUserDialog({
   open,
   onOpenChange,
   usernames,
+  lines,
   onCreated,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   usernames: string[]
+  lines: string[]
   onCreated: (c: Credentials) => void
 }) {
   const [name, setName] = useState("")
@@ -285,7 +270,6 @@ function AddUserDialog({
   const next: Record<string, string> = {}
   if (!name.trim()) next.name = "Nama wajib diisi"
   if (!role) next.role = "Pilih role"
-  if (!line) next.line = "Pilih line"
   if (!/^[a-z0-9._]{3,}$/.test(u))
     next.username =
       "Minimal 3 karakter: huruf kecil, angka, titik, atau garis bawah"
@@ -361,24 +345,32 @@ function AddUserDialog({
             {role && <DisabledReason>{ROLE_HELP[role]}</DisabledReason>}
           </Field>
           <Field
-            label={role === "admin" ? "Line yang diawasi" : "Bertugas di"}
+            label={
+              role === "admin"
+                ? "Line yang diawasi (boleh diatur nanti)"
+                : "Bertugas di line (boleh diatur nanti)"
+            }
             htmlFor="user-line"
             error={errors.line}
           >
             <Select
-              value={line || null}
-              items={LINES.map((l) => ({ value: l, label: l }))}
-              onValueChange={(v) => v && setLine(v)}
+              value={line || NO_LINE}
+              items={[
+                { value: NO_LINE, label: "Belum ditempatkan" },
+                ...lines.map((l) => ({ value: l, label: l })),
+              ]}
+              onValueChange={(v) => setLine(!v || v === NO_LINE ? "" : v)}
             >
               <SelectTrigger
                 id="user-line"
                 className="w-full"
                 aria-invalid={!!errors.line}
               >
-                <SelectValue placeholder="Pilih line" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LINES.map((l) => (
+                <SelectItem value={NO_LINE}>Belum ditempatkan</SelectItem>
+                {lines.map((l) => (
                   <SelectItem key={l} value={l}>
                     {l}
                   </SelectItem>

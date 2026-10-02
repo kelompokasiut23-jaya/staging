@@ -93,7 +93,14 @@ function AdminTaskDetail({ canManage }: { canManage: boolean }) {
     )
   }
 
-  const qc = users.find((u) => u.id === task.assignedTo)
+  const qcNames =
+    users
+      .filter((u) => u.role === "qc" && u.active && u.line === task.line)
+      .map((u) => u.name)
+      .join(", ") || "Belum ada QC"
+  const finishedBy = [...task.logs]
+    .reverse()
+    .find((l) => l.action === "selesai")?.by
   const t = totals(task)
   const overdue = now > 0 && isOverdue(task, now)
 
@@ -129,7 +136,7 @@ function AdminTaskDetail({ canManage }: { canManage: boolean }) {
                 <DialogHeader>
                   <DialogTitle>Hapus {task.item}?</DialogTitle>
                   <DialogDescription>
-                    Barang ini akan hilang dari halaman {qc?.name ?? "QC"}.
+                    Barang ini akan hilang dari halaman QC di {task.line}.
                     Tindakan ini tidak bisa dibatalkan.
                   </DialogDescription>
                 </DialogHeader>
@@ -165,7 +172,8 @@ function AdminTaskDetail({ canManage }: { canManage: boolean }) {
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm @3xl/main:grid-cols-4">
             <Info label="Client" value={task.brand} />
             <Info label="Warna" value={task.color} />
-            <Info label="QC" value={`${qc?.name ?? "-"} · ${task.line}`} />
+            <Info label="Line" value={task.line} />
+            <Info label="QC di line ini" value={qcNames} />
             <Info
               label="Batas selesai"
               value={
@@ -199,7 +207,7 @@ function AdminTaskDetail({ canManage }: { canManage: boolean }) {
           <CardTitle>Hasil QC</CardTitle>
           <CardDescription>
             {task.status === "selesai" && task.finishedAt
-              ? `Laporan final dari ${qc?.name ?? "QC"}, ${formatDateTime(task.finishedAt)}.`
+              ? `Laporan final dari ${finishedBy ?? "QC"}, ${formatDateTime(task.finishedAt)}.`
               : "Angka sementara. Berubah setiap kali QC menyimpan hasil."}
           </CardDescription>
         </CardHeader>

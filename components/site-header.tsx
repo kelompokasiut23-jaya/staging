@@ -12,6 +12,7 @@ const TITLES: Record<string, string> = {
   "/admin/tugas": "Laporan QC",
   "/admin/tugas/baru": "Tambah Barang",
   "/admin/pengguna": "Pengguna",
+  "/admin/line": "Line",
 }
 
 export function SiteHeader() {

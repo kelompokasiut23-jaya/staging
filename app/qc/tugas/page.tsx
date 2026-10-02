@@ -91,15 +91,15 @@ function TaskLoader({ user }: { user: User }) {
   if (tasks === null) return <Loading />
 
   const task = tasks.find((t) => t.id === id)
-  // QC hanya boleh membuka tugas yang ditugaskan kepadanya.
-  if (!task || task.assignedTo !== user.id) {
+  // QC hanya boleh membuka barang di line-nya sendiri.
+  if (!task || !user.line || task.line !== user.line) {
     return (
       <div className="grid gap-4">
         <BackLink />
         <EmptyState
           icon={FileSearchIcon}
           title="Tugas tidak ditemukan"
-          description={`Tugas ini tidak ada atau tidak ditugaskan kepada Anda. Kembali ke daftar tugas untuk memilih tugas yang harus Anda periksa.`}
+          description={`Tugas ini tidak ada atau bukan untuk line Anda. Kembali ke daftar tugas untuk memilih tugas yang harus Anda periksa.`}
         />
       </div>
     )

@@ -4,7 +4,7 @@ export interface User {
   id: string
   name: string
   role: Role
-  /** Line tempat bertugas (QC) atau line yang diawasi (admin). Kosong untuk super admin. */
+  /** Line tempat bertugas (QC) atau yang diawasi (admin). Kosong jika belum ditempatkan. */
   line: string
   username: string
   active: boolean
@@ -17,7 +17,10 @@ export const ROLE_LABEL: Record<Role, string> = {
   qc: "QC",
 }
 
-export const LINES = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5"]
+export interface Line {
+  name: string
+  createdAt: string
+}
 
 export type TaskStatus = "belum" | "diperiksa" | "selesai"
 
@@ -42,7 +45,7 @@ export interface TaskLog {
   note: string
 }
 
-/** Satu target QC: satu client + satu item + satu warna, dikerjakan oleh satu QC. */
+/** Satu target QC: satu client + satu item + satu warna, dikerjakan oleh QC di satu line. */
 export interface QcTask {
   id: string
   /** Nama client / perusahaan pemilik barang. */
@@ -50,8 +53,6 @@ export interface QcTask {
   item: string
   color: string
   line: string
-  /** id user QC yang ditugaskan. */
-  assignedTo: string
   deadline: string
   sizes: SizeCount[]
   status: TaskStatus

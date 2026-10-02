@@ -6,6 +6,7 @@ import Link from "next/link"
 import {
   ClipboardCheckIcon,
   KeyRoundIcon,
+  LayoutListIcon,
   ListChecksIcon,
   LogOutIcon,
   ShieldCheckIcon,
@@ -46,6 +47,7 @@ const ITEMS = {
     icon: <ListChecksIcon />,
     also: ["/admin/tugas", "/admin/tugas/baru"],
   },
+  lines: { title: "Line", url: "/admin/line/", icon: <LayoutListIcon /> },
   users: { title: "Pengguna", url: "/admin/pengguna/", icon: <UsersIcon /> },
   myTasks: {
     title: "Tugas Saya",
@@ -57,7 +59,7 @@ const ITEMS = {
 
 // Menu yang boleh diakses setiap role.
 const NAV: Record<Role, NavItem[]> = {
-  super_admin: [ITEMS.items, ITEMS.users],
+  super_admin: [ITEMS.lines, ITEMS.items, ITEMS.users],
   admin: [ITEMS.items],
   qc: [ITEMS.myTasks],
 }

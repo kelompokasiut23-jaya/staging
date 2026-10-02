@@ -52,7 +52,8 @@ export default function MyTasksPage() {
 
 function MyTasks({ user }: { user: User }) {
   const all = useTasks()
-  const tasks = all?.filter((t) => t.assignedTo === user.id) ?? null
+  // Semua QC di line yang sama mengerjakan barang yang sama.
+  const tasks = all?.filter((t) => !!user.line && t.line === user.line) ?? null
   const now = useNow()
   const [filter, setFilter] = useState<Filter>("semua")
 
@@ -84,7 +85,8 @@ function MyTasks({ user }: { user: User }) {
           Halo, {user.name}
         </h2>
         <p className="text-sm text-muted-foreground">
-          {now > 0 ? `${formatDay(now)} · ` : ""}Tugas QC Anda di {user.line}.
+          {now > 0 ? `${formatDay(now)} · ` : ""}
+          {user.line ? `Barang yang harus diperiksa di ${user.line}.` : ""}
           Buka sebuah tugas untuk mengisi jumlah barang yang lolos dan defect.
         </p>
       </div>
@@ -93,8 +95,16 @@ function MyTasks({ user }: { user: User }) {
         <div>
           <EmptyState
             icon={InboxIcon}
-            title="Belum ada tugas untuk Anda"
-            description={`Tugas akan muncul di sini setelah admin memasukkan barang yang harus Anda periksa. Anda tidak perlu melakukan apa pun sampai tugas masuk.`}
+            title={
+              user.line
+                ? "Belum ada barang untuk diperiksa"
+                : "Anda belum ditempatkan di line"
+            }
+            description={
+              user.line
+                ? `Barang akan muncul di sini setelah super admin menambahkannya ke ${user.line}. Anda tidak perlu melakukan apa pun sampai barang masuk.`
+                : "Super admin perlu menempatkan Anda di sebuah line dulu. Setelah itu, barang di line tersebut akan muncul di sini."
+            }
           />
         </div>
       ) : (

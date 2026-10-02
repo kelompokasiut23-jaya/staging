@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 
 import type {
+  Line,
   QcTask,
   Role,
   SizeCount,
@@ -29,10 +30,11 @@ interface State {
   auth: AuthState
   tasks: QcTask[] | null
   users: User[] | null
+  lines: Line[] | null
 }
 
 const LOADING: AuthState = { status: "loading" }
-let state: State = { auth: LOADING, tasks: null, users: null }
+let state: State = { auth: LOADING, tasks: null, users: null, lines: null }
 const listeners = new Set<() => void>()
 let started = false
 let channel: RealtimeChannel | null = null
@@ -52,7 +54,7 @@ interface ProfileRow {
   name: string
   username: string
   role: Role
-  line: string
+  line: string | null
   active: boolean
   created_at: string
 }
@@ -71,7 +73,6 @@ interface TaskRow {
   item: string
   color: string
   line: string
-  assigned_to: string
   deadline: string
   sizes: SizeCount[]
   status: TaskStatus
@@ -88,7 +89,7 @@ function toUser(row: ProfileRow): User {
     name: row.name,
     username: row.username,
     role: row.role,
-    line: row.line,
+    line: row.line ?? "",
     active: row.active,
     createdAt: row.created_at,
   }
@@ -110,7 +111,6 @@ function toTask(row: TaskRow): QcTask {
     item: row.item,
     color: row.color,
     line: row.line,
-    assignedTo: row.assigned_to,
     deadline: row.deadline,
     sizes: row.sizes,
     status: row.status,
@@ -156,13 +156,20 @@ async function loadProfile(userId: string) {
 }
 
 export async function refetch() {
-  const [tasks, users] = await Promise.all([
+  const [tasks, users, lines] = await Promise.all([
     supabase.from("tasks").select("*, task_logs(*)").order("deadline"),
     supabase.from("profiles").select("*").order("name"),
+    supabase.from("lines").select("*").order("name"),
   ])
   set({
     tasks: tasks.data ? (tasks.data as TaskRow[]).map(toTask) : [],
     users: users.data ? (users.data as ProfileRow[]).map(toUser) : [],
+    lines: lines.data
+      ? (lines.data as { name: string; created_at: string }[]).map((l) => ({
+          name: l.name,
+          createdAt: l.created_at,
+        }))
+      : [],
   })
 }
 
@@ -190,6 +197,16 @@ function subscribeRealtime() {
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "task_logs" },
+      scheduleRefetch
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "lines" },
+      scheduleRefetch
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "profiles" },
       scheduleRefetch
     )
     .subscribe((status) => {
@@ -224,6 +241,7 @@ function start() {
           auth: { status: "signedOut", message },
           tasks: null,
           users: null,
+          lines: null,
         })
         return
       }
@@ -266,6 +284,14 @@ export function useUsers(): User[] | null {
   )
 }
 
+export function useLines(): Line[] | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => state.lines,
+    () => null
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Aksi. Semua mengembalikan pesan error (atau null jika berhasil).
 // ---------------------------------------------------------------------------
@@ -302,7 +328,7 @@ export interface NewTaskInput {
   brand: string
   item: string
   color: string
-  assignedTo: string
+  line: string
   deadline: string
   sizes: { size: string; target: number }[]
   note: string
@@ -317,11 +343,10 @@ export async function addTask(
       brand: input.brand,
       item: input.item,
       color: input.color,
-      assigned_to: input.assignedTo,
       deadline: input.deadline,
       sizes: input.sizes.map((s) => ({ ...s, passed: 0, defect: 0 })),
       note: input.note,
-      line: "",
+      line: input.line,
     })
     .select("*, task_logs(*)")
     .single()
@@ -389,6 +414,7 @@ export function createUser(input: {
   name: string
   username: string
   role: "admin" | "qc"
+  /** Kosong jika belum ditempatkan di line. */
   line: string
   password: string
 }) {
@@ -401,4 +427,52 @@ export function setUserPassword(userId: string, password: string) {
 
 export function setUserActive(userId: string, active: boolean) {
   return adminUsers({ action: "set_active", user_id: userId, active })
+}
+
+// ---------------------------------------------------------------------------
+// Line (khusus super admin; dijaga juga oleh aturan akses di database)
+// ---------------------------------------------------------------------------
+
+function lineError(message: string) {
+  if (/duplicate key|already exists/i.test(message))
+    return "Nama line ini sudah dipakai"
+  if (/foreign key|violates/i.test(message))
+    return "Line masih berisi pengguna atau barang, jadi belum bisa dihapus"
+  return friendly(message)
+}
+
+export async function createLine(name: string): Result {
+  const { error } = await supabase.from("lines").insert({ name: name.trim() })
+  if (error) return lineError(error.message)
+  await refetch()
+  return null
+}
+
+export async function renameLine(oldName: string, newName: string): Result {
+  const { error } = await supabase
+    .from("lines")
+    .update({ name: newName.trim() })
+    .eq("name", oldName)
+  if (error) return lineError(error.message)
+  await refetch()
+  return null
+}
+
+export async function deleteLine(name: string): Result {
+  const { error } = await supabase.from("lines").delete().eq("name", name)
+  if (error) return lineError(error.message)
+  await refetch()
+  return null
+}
+
+/** Menempatkan pengguna ke line (atau `null` untuk mengeluarkan dari line). */
+export async function setUserLine(userId: string, line: string | null): Result {
+  const { error, count } = await supabase
+    .from("profiles")
+    .update({ line }, { count: "exact" })
+    .eq("id", userId)
+  if (error) return lineError(error.message)
+  if (!count) return "Pengguna tidak bisa dipindahkan"
+  await refetch()
+  return null
 }

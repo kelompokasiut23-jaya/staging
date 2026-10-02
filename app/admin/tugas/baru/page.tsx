@@ -1,9 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { ArrowLeftIcon, PlusIcon, Trash2Icon, UserPlusIcon } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import {
+  ArrowLeftIcon,
+  LayoutListIcon,
+  PlusIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { DisabledReason, EmptyState } from "@/components/empty-state"
@@ -27,10 +32,14 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { formatNumber } from "@/lib/qc"
-import { addTask, useTasks, useUsers } from "@/lib/qc-store"
+import { addTask, useLines, useTasks, useUsers } from "@/lib/qc-store"
 
 export default function NewTaskPage() {
-  return <RoleGate roles={["super_admin"]}>{() => <NewTaskForm />}</RoleGate>
+  return (
+    <Suspense>
+      <RoleGate roles={["super_admin"]}>{() => <NewTaskForm />}</RoleGate>
+    </Suspense>
+  )
 }
 
 interface SizeRow {
@@ -40,10 +49,7 @@ interface SizeRow {
 }
 
 type Errors = Partial<
-  Record<
-    "brand" | "item" | "color" | "assignedTo" | "deadline" | "sizes",
-    string
-  >
+  Record<"brand" | "item" | "color" | "line" | "deadline" | "sizes", string>
 >
 
 function todayInJakarta() {
@@ -56,13 +62,14 @@ function NewTaskForm() {
   const router = useRouter()
   const users = useUsers() ?? []
   const tasks = useTasks() ?? []
-  const qcUsers = users.filter((u) => u.role === "qc" && u.active)
+  const lines = (useLines() ?? []).map((l) => l.name)
+  const preselected = useSearchParams().get("line") ?? ""
   const clients = Array.from(new Set(tasks.map((t) => t.brand))).sort()
 
   const [brand, setBrand] = useState("")
   const [item, setItem] = useState("")
   const [color, setColor] = useState("")
-  const [assignedTo, setAssignedTo] = useState("")
+  const [line, setLine] = useState(preselected)
   const [date, setDate] = useState(todayInJakarta)
   const [time, setTime] = useState("")
   const [note, setNote] = useState("")
@@ -75,11 +82,10 @@ function NewTaskForm() {
   const [saveError, setSaveError] = useState("")
   const [saving, setSaving] = useState(false)
 
-  const qc = qcUsers.find((u) => u.id === assignedTo)
-  const qcItems = qcUsers.map((u) => ({
-    value: u.id,
-    label: `${u.name} · ${u.line}`,
-  }))
+  const lineQcs = users.filter(
+    (u) => u.role === "qc" && u.active && u.line === line
+  )
+  const lineItems = lines.map((l) => ({ value: l, label: l }))
   const total = rows.reduce((sum, r) => sum + (Number(r.target) || 0), 0)
 
   function updateRow(key: number, field: "size" | "target", value: string) {
@@ -105,7 +111,10 @@ function NewTaskForm() {
     if (!brand.trim()) next.brand = "Nama client wajib diisi"
     if (!item.trim()) next.item = "Nama item wajib diisi"
     if (!color.trim()) next.color = "Warna wajib diisi"
-    if (!qc) next.assignedTo = "Pilih QC yang akan memeriksa"
+    if (!line || !lines.includes(line))
+      next.line = "Pilih line yang akan memeriksa barang ini"
+    else if (lineQcs.length === 0)
+      next.line = `${line} belum punya QC. Tempatkan QC di line ini lewat halaman Line dulu.`
     if (!date || !time) next.deadline = "Isi tanggal dan jam batas selesai"
 
     const sizes = rows.map((r) => ({
@@ -126,21 +135,21 @@ function NewTaskForm() {
 
   const { next: liveErrors, sizes } = validate()
   const errors: Errors = submitted
-    ? { ...liveErrors, ...(saveError ? { assignedTo: saveError } : {}) }
+    ? { ...liveErrors, ...(saveError ? { line: saveError } : {}) }
     : {}
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setSubmitted(true)
     setSaveError("")
-    if (Object.keys(liveErrors).length > 0 || !qc) return
+    if (Object.keys(liveErrors).length > 0) return
 
     setSaving(true)
     const { task, error } = await addTask({
       brand: brand.trim(),
       item: item.trim(),
       color: color.trim(),
-      assignedTo: qc.id,
+      line,
       deadline: new Date(`${date}T${time}:00+07:00`).toISOString(),
       sizes,
       note: note.trim(),
@@ -150,7 +159,7 @@ function NewTaskForm() {
       setSaveError(error ?? "Gagal menyimpan, coba lagi")
       return
     }
-    toast.success(`${task.brand} · ${task.item} dikirim ke ${qc.name}`)
+    toast.success(`${task.brand} · ${task.item} dikirim ke ${line}`)
     router.push("/admin/")
   }
 
@@ -166,14 +175,14 @@ function NewTaskForm() {
         Kembali ke Daftar Barang
       </Button>
 
-      {qcUsers.length === 0 ? (
+      {lines.length === 0 ? (
         <EmptyState
-          icon={UserPlusIcon}
-          title="Belum ada QC yang bisa ditugaskan"
-          description="Setiap barang harus diperiksa oleh satu QC. Tambahkan akun QC dulu di menu Pengguna, lalu kembali ke sini."
+          icon={LayoutListIcon}
+          title="Belum ada line"
+          description="Setiap barang diperiksa di sebuah line. Buat line dan tempatkan QC di dalamnya lewat halaman Line, lalu kembali ke sini."
         >
-          <Button render={<Link href="/admin/pengguna/" />}>
-            Buka Pengguna
+          <Button render={<Link href="/admin/line/" />}>
+            Buka halaman Line
           </Button>
         </EmptyState>
       ) : (
@@ -306,39 +315,36 @@ function NewTaskForm() {
             <CardHeader>
               <CardTitle>Penugasan</CardTitle>
               <CardDescription>
-                Siapa yang memeriksa dan kapan harus selesai.
+                Line yang memeriksa dan kapan harus selesai.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-              <Field
-                label="Diperiksa oleh QC"
-                htmlFor="assignedTo"
-                error={errors.assignedTo}
-              >
+              <Field label="Line" htmlFor="task-line" error={errors.line}>
                 <Select
-                  value={assignedTo || null}
-                  items={qcItems}
-                  onValueChange={(v) => v && setAssignedTo(v)}
+                  value={line || null}
+                  items={lineItems}
+                  onValueChange={(v) => v && setLine(v)}
                 >
                   <SelectTrigger
-                    id="assignedTo"
+                    id="task-line"
                     className="w-full"
-                    aria-invalid={!!errors.assignedTo}
+                    aria-invalid={!!errors.line}
                   >
-                    <SelectValue placeholder="Pilih QC" />
+                    <SelectValue placeholder="Pilih line" />
                   </SelectTrigger>
                   <SelectContent>
-                    {qcItems.map((i) => (
+                    {lineItems.map((i) => (
                       <SelectItem key={i.value} value={i.value}>
                         {i.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {qc && (
+                {line && lineQcs.length > 0 && (
                   <DisabledReason>
-                    Barang akan diperiksa di {qc.line}, tempat {qc.name}{" "}
-                    bertugas.
+                    Diperiksa oleh QC di {line}:{" "}
+                    {lineQcs.map((u) => u.name).join(", ")}. Semuanya bisa
+                    mengisi hasil barang ini.
                   </DisabledReason>
                 )}
               </Field>
