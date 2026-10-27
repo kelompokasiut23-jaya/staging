@@ -17,8 +17,8 @@ export function MockupStage({ children }: { children: React.ReactNode }) {
     if (!el) return
     const measure = () => {
       const w = el.clientWidth
-      const scale = w < 640 ? 0.45 : Math.min(1, w / W)
-      setSize({ scale, left: w < 640 ? 0 : Math.max(0, (w - W * scale) / 2) })
+      const scale = Math.min(1, w / W)
+      setSize({ scale, left: Math.max(0, (w - W * scale) / 2) })
     }
     measure()
     const ro = new ResizeObserver(measure)

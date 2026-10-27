@@ -24,9 +24,9 @@ import { Bar, Counter, EASE } from "./motion-kit"
  */
 
 type Page = "barang" | "pengguna"
-type Status = "belum" | "diperiksa" | "selesai"
+export type Status = "belum" | "diperiksa" | "selesai"
 
-interface Item {
+export interface Item {
   client: string
   item: string
   color: string
@@ -42,7 +42,7 @@ interface Item {
   late: boolean
 }
 
-const ITEMS: Item[] = [
+export const ITEMS: Item[] = [
   {
     client: "UNIQLO",
     item: "Celana Jeans",
@@ -75,13 +75,13 @@ const ITEMS: Item[] = [
   },
 ]
 
-const STATUS_LABEL: Record<Status, { text: string; tone: string }> = {
+export const STATUS_LABEL: Record<Status, { text: string; tone: string }> = {
   belum: { text: "Belum dimulai", tone: "bg-[#2A3042] text-[#E6E9F0]" },
   diperiksa: { text: "Sedang diperiksa", tone: "bg-[#1B2C4F] text-[#7DB1FF]" },
   selesai: { text: "Selesai", tone: "bg-[#173D2A] text-[#4ADE80]" },
 }
 
-const STATS = [
+export const STATS = [
   { label: "Total barang", to: 3850, chip: "2 tugas", sub: "0 tugas selesai" },
   { label: "Sudah diperiksa", to: 2000, chip: "52%", sub: "Sisa 1.850 barang" },
   { label: "Defect", to: 165, chip: "8,3%", sub: "Lolos 1.835 barang" },
@@ -93,9 +93,9 @@ const STATS = [
   },
 ]
 
-type TabKey = "semua" | Status | "terlambat"
+export type TabKey = "semua" | Status | "terlambat"
 
-const TABS: { key: TabKey; label: string; count: string }[] = [
+export const TABS: { key: TabKey; label: string; count: string }[] = [
   { key: "semua", label: "Semua", count: "2" },
   { key: "belum", label: "Belum dimulai", count: "1" },
   { key: "diperiksa", label: "Sedang diperiksa", count: "1" },
@@ -124,7 +124,7 @@ const HEAD = [
   "",
 ]
 
-function Badge({
+export function Badge({
   tone,
   children,
 }: {
@@ -320,9 +320,9 @@ function BarangPage() {
   )
 }
 
-type Role = "Admin" | "QC"
+export type Role = "Admin" | "QC"
 
-const USERS: {
+export const USERS: {
   name: string
   role: Role
   line: string
@@ -346,7 +346,7 @@ const USERS: {
   },
 ]
 
-const USER_TABS: { key: "semua" | Role; label: string }[] = [
+export const USER_TABS: { key: "semua" | Role; label: string }[] = [
   { key: "semua", label: "Semua (3)" },
   { key: "Admin", label: "Admin (1)" },
   { key: "QC", label: "QC (2)" },

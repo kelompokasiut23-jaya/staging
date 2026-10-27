@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react"
 import { ArrowUpRightIcon, PlayIcon, RadioIcon } from "lucide-react"
 
 import { MockDashboard } from "./mock-dashboard"
+import { MockPhone } from "./mock-phone"
 import { EASE } from "./motion-kit"
 import { MockupStage } from "./mockup-stage"
 import { BG, Glow, HeroBeams, Stage } from "./ui"
@@ -110,15 +111,20 @@ export function Hero() {
         </motion.div>
       </div>
 
-      <div className="relative mt-12 px-4 sm:px-5 lg:mt-8 lg:px-[30px]">
-        <MockupStage>
-          <MockDashboard />
-        </MockupStage>
+      <div className="relative mt-12 px-4 pb-10 sm:px-5 md:pb-0 lg:mt-8 lg:px-[30px]">
+        <div className="md:hidden">
+          <MockPhone />
+        </div>
+        <div className="hidden md:block">
+          <MockupStage>
+            <MockDashboard />
+          </MockupStage>
+        </div>
       </div>
 
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[236px]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-16 md:h-[236px]"
         style={{ background: `linear-gradient(to bottom, ${BG}00, ${BG})` }}
       />
     </section>
