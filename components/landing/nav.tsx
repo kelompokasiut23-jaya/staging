@@ -14,13 +14,24 @@ const LINKS = [
   { href: "#faq", label: "FAQ" },
 ]
 
-export function Logo() {
+export function Logo({ size = "lg" }: { size?: "lg" | "sm" }) {
+  const lg = size === "lg"
   return (
-    <span className="flex items-center gap-2.5 text-[15px] font-semibold text-white">
-      <span className="flex size-7 items-center justify-center rounded-lg bg-[#3b82f6]">
-        <ShieldCheckIcon className="size-4" />
+    <span className="flex items-center gap-2.5">
+      <span
+        className={`flex items-center justify-center bg-[#4690FF] text-[#0A0A0A] ${
+          lg ? "size-8 rounded-[10px]" : "size-7 rounded-[9px]"
+        }`}
+      >
+        <ShieldCheckIcon className={lg ? "size-[18px]" : "size-[15px]"} />
       </span>
-      Monitoring QC
+      <span
+        className={`font-semibold text-[#F5F5F5] ${
+          lg ? "text-lg tracking-[-0.022em]" : "text-[15px]"
+        }`}
+      >
+        Monitoring QC
+      </span>
     </span>
   )
 }
@@ -30,7 +41,7 @@ export function Nav() {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12)
+    const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
@@ -43,11 +54,11 @@ export function Nav() {
       transition={{ duration: 0.7, ease: EASE }}
       className={`fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300 ${
         scrolled || open
-          ? "border-white/10 bg-black/80 backdrop-blur-xl"
+          ? "border-white/10 bg-[#050505]/80 backdrop-blur-xl"
           : "border-transparent"
       }`}
     >
-      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6">
+      <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 sm:px-10 lg:h-[88px] lg:px-20">
         <Link href="/" aria-label="Monitoring QC">
           <Logo />
         </Link>
@@ -57,17 +68,17 @@ export function Nav() {
             <a
               key={l.href}
               href={l.href}
-              className="text-[13px] text-white/80 transition-colors hover:text-white"
+              className="text-sm font-medium text-[#CFCFCF] transition-colors hover:text-white"
             >
               {l.label}
             </a>
           ))}
         </nav>
 
-        <div className="col-start-3 flex items-center justify-end gap-2">
+        <div className="flex items-center gap-2">
           <Link
             href="/masuk/"
-            className="inline-flex h-9 items-center rounded-full border border-white/15 bg-white/10 px-5 text-[13px] font-medium text-white transition-colors hover:bg-white/20"
+            className="inline-flex items-center rounded-full border border-[#FFFFFF22] bg-[linear-gradient(135deg,#242424,#0E0E0E)] px-[22px] py-2.5 text-sm font-semibold text-[#F5F5F5] transition-colors hover:border-white/30"
           >
             Masuk
           </Link>
@@ -76,7 +87,7 @@ export function Nav() {
             aria-label={open ? "Tutup menu" : "Buka menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="flex size-9 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden"
+            className="flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden"
           >
             {open ? (
               <XIcon className="size-5" />
@@ -96,13 +107,13 @@ export function Nav() {
             transition={{ duration: 0.3, ease: EASE }}
             className="overflow-hidden md:hidden"
           >
-            <div className="flex flex-col px-4 pb-4">
+            <div className="flex flex-col px-5 pb-4">
               {LINKS.map((l) => (
                 <a
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-3 py-3 text-white/90 hover:bg-white/5"
+                  className="rounded-lg px-3 py-3 text-[#CFCFCF] hover:bg-white/5"
                 >
                   {l.label}
                 </a>

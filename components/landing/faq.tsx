@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react"
 import { MinusIcon, PlusIcon } from "lucide-react"
 
 import { EASE, Reveal } from "./motion-kit"
-import { Pill } from "./sections"
+import { CARD, Glow, PAD_X, Pill, Stage } from "./ui"
 
 const ITEMS = [
   {
@@ -29,48 +29,55 @@ const ITEMS = [
 export function Faq() {
   const [open, setOpen] = useState<number | null>(0)
   return (
-    <section className="px-4 py-20 sm:px-6 sm:py-28">
-      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1fr_1.7fr]">
-        <Reveal>
+    <section className={`relative ${PAD_X} pt-6 pb-[120px]`}>
+      <Stage>
+        <Glow x={-240} y={20} w={820} h={520} color="#0B182A" />
+        <Glow x={820} y={40} w={760} h={480} color="#09121F" />
+      </Stage>
+
+      <div className="relative mx-auto flex max-w-[1280px] flex-col gap-10 lg:flex-row lg:gap-16">
+        <Reveal className="flex flex-col items-start gap-5 lg:w-[420px] lg:shrink-0">
           <div id="faq" className="scroll-mt-24">
             <Pill>FAQ</Pill>
           </div>
-          <h2 className="mt-5 text-3xl font-medium tracking-[-0.03em] text-white sm:text-4xl">
+          <h2 className="text-[32px] leading-[1.08] font-medium tracking-[-0.041em] text-[#F5F5F5] sm:text-[40px] lg:text-[46px]">
             Pertanyaan Yang Sering Muncul.
           </h2>
-          <p className="mt-3 max-w-xs text-xs leading-relaxed text-white/50">
+          <p className="text-[15px] leading-[1.6] text-[#8C8C8C]">
             Tidak menemukan jawabannya? Hubungi super admin di tempat Anda.
           </p>
         </Reveal>
 
-        <Reveal className="space-y-2.5" delay={0.1}>
+        <Reveal className="flex flex-1 flex-col gap-3.5" delay={0.1}>
           {ITEMS.map((item, i) => {
             const isOpen = open === i
             return (
               <div
                 key={item.q}
-                className={`rounded-2xl border bg-gradient-to-b from-white/[0.07] to-white/[0.02] transition-colors ${
-                  isOpen ? "border-[#3b82f6]/40" : "border-white/10"
+                className={`${CARD} !rounded-[28px] px-5 py-[22px] transition-colors sm:px-[26px] ${
+                  isOpen ? "!border-[#4690FF55]" : ""
                 }`}
               >
                 <button
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? null : i)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm text-white"
+                  className="flex w-full items-center justify-between gap-4 text-left"
                 >
-                  {item.q}
+                  <span className="text-base font-medium tracking-[-0.022em] text-[#F5F5F5] sm:text-lg">
+                    {item.q}
+                  </span>
                   <span
-                    className={`flex size-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                    className={`flex size-[34px] shrink-0 items-center justify-center rounded-full transition-colors ${
                       isOpen
-                        ? "bg-[#3b82f6] text-white"
-                        : "bg-white/10 text-white/70"
+                        ? "bg-[#4690FF] text-[#0A0A0A]"
+                        : "bg-[#FFFFFF14] text-white"
                     }`}
                   >
                     {isOpen ? (
-                      <MinusIcon className="size-3" />
+                      <MinusIcon className="size-4" />
                     ) : (
-                      <PlusIcon className="size-3" />
+                      <PlusIcon className="size-4" />
                     )}
                   </span>
                 </button>
@@ -83,7 +90,7 @@ export function Faq() {
                       transition={{ duration: 0.35, ease: EASE }}
                       className="overflow-hidden"
                     >
-                      <p className="px-5 pb-5 text-xs leading-relaxed text-white/55">
+                      <p className="pt-3 text-[15px] leading-[1.6] text-[#8C8C8C]">
                         {item.a}
                       </p>
                     </motion.div>

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="dark min-h-svh bg-[#050505] text-white antialiased">
+    <div className="dark min-h-svh overflow-x-clip bg-[#050505] text-[#F5F5F5]">
       <Nav />
       <main>
         <Hero />

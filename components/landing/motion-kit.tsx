@@ -109,20 +109,20 @@ export function Counter({ to, className }: { to: number; className?: string }) {
 /** Batang progres yang terisi saat terlihat. */
 export function Bar({
   percent,
-  className = "",
-  barClassName = "bg-[#3d8bff]",
+  className = "h-1.5",
+  track = "bg-[#2A2A2A]",
+  barClassName = "bg-[#4690FF]",
   delay = 0.2,
 }: {
   percent: number
   className?: string
+  track?: string
   barClassName?: string
   delay?: number
 }) {
   const reduce = useReducedMotion()
   return (
-    <div
-      className={`h-1.5 overflow-hidden rounded-full bg-white/10 ${className}`}
-    >
+    <div className={`overflow-hidden rounded-full ${track} ${className}`}>
       <motion.div
         className={`h-full rounded-full ${barClassName}`}
         initial={reduce ? false : { width: 0 }}
