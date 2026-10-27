@@ -2,86 +2,98 @@
 
 import { useState } from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { PlusIcon } from "lucide-react"
+import { MinusIcon, PlusIcon } from "lucide-react"
 
 import { EASE, Reveal } from "./motion-kit"
+import { Pill } from "./sections"
 
 const ITEMS = [
   {
     q: "Siapa yang bisa membuat akun?",
-    a: "Hanya super admin. Super admin membuat username dan password, lalu memberikannya kepada admin atau QC yang bersangkutan.",
+    a: "Hanya super admin. Tidak ada pendaftaran mandiri. Admin line dan QC masuk dengan username dan password dari super admin.",
   },
   {
-    q: "Apakah QC bisa melihat tugas QC lain?",
-    a: "Tidak. QC hanya melihat tugas yang ditugaskan kepadanya, dan hanya bisa mengubah hasil pemeriksaan miliknya.",
+    q: "Bagaimana jika lupa password?",
+    a: "Hubungi super admin. Super admin bisa membuat password baru untuk akun Anda kapan saja.",
   },
   {
-    q: "Apakah data langsung berubah di layar admin?",
-    a: "Ya. Setiap kali QC menyimpan hasil, layar admin diperbarui otomatis. Jika koneksi sempat terputus, data tetap dimuat ulang berkala.",
+    q: "Barang yang salah input bisa dihapus?",
+    a: "Bisa, selama QC belum mulai memeriksa barang tersebut. Setelah ada hasil yang tersimpan, barang tidak bisa dihapus lagi agar riwayatnya tetap utuh.",
   },
   {
-    q: "Apa yang terjadi kalau jumlah lolos dan defect belum lengkap?",
-    a: "Tugas baru bisa ditandai selesai ketika jumlah lolos ditambah defect sudah sama dengan target di setiap size.",
-  },
-  {
-    q: "Bisakah dipakai dari ponsel?",
-    a: "Bisa. Semua halaman menyesuaikan ukuran layar, sehingga nyaman dipakai QC langsung di lantai produksi.",
+    q: "Kapan angka di dashboard berubah?",
+    a: "Setiap kali QC menyimpan hasil. Angka di dashboard ikut berubah tanpa perlu memuat ulang halaman.",
   },
 ]
 
 export function Faq() {
   const [open, setOpen] = useState<number | null>(0)
   return (
-    <section className="border-t border-white/10 px-4 py-20 sm:px-6 sm:py-28">
-      <Reveal className="mx-auto max-w-2xl text-center">
-        <p
-          id="tanya-jawab"
-          className="scroll-mt-24 text-sm font-medium text-[#7db1ff]"
-        >
-          Tanya jawab
-        </p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Pertanyaan yang sering muncul
-        </h2>
-      </Reveal>
-      <Reveal className="mx-auto mt-12 max-w-2xl divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
-        {ITEMS.map((item, i) => {
-          const isOpen = open === i
-          return (
-            <div key={item.q}>
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? null : i)}
-                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-medium text-white"
+    <section className="px-4 py-20 sm:px-6 sm:py-28">
+      <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-[1fr_1.7fr]">
+        <Reveal>
+          <div id="faq" className="scroll-mt-24">
+            <Pill>FAQ</Pill>
+          </div>
+          <h2 className="mt-5 text-3xl font-medium tracking-[-0.03em] text-white sm:text-4xl">
+            Pertanyaan Yang Sering Muncul.
+          </h2>
+          <p className="mt-3 max-w-xs text-xs leading-relaxed text-white/50">
+            Tidak menemukan jawabannya? Hubungi super admin di tempat Anda.
+          </p>
+        </Reveal>
+
+        <Reveal className="space-y-2.5" delay={0.1}>
+          {ITEMS.map((item, i) => {
+            const isOpen = open === i
+            return (
+              <div
+                key={item.q}
+                className={`rounded-2xl border bg-gradient-to-b from-white/[0.07] to-white/[0.02] transition-colors ${
+                  isOpen ? "border-[#3b82f6]/40" : "border-white/10"
+                }`}
               >
-                {item.q}
-                <motion.span
-                  animate={{ rotate: isOpen ? 45 : 0 }}
-                  transition={{ duration: 0.25 }}
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm text-white"
                 >
-                  <PlusIcon className="size-4 shrink-0 text-slate-400" />
-                </motion.span>
-              </button>
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.35, ease: EASE }}
-                    className="overflow-hidden"
+                  {item.q}
+                  <span
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-full transition-colors ${
+                      isOpen
+                        ? "bg-[#3b82f6] text-white"
+                        : "bg-white/10 text-white/70"
+                    }`}
                   >
-                    <p className="px-5 pb-5 text-sm leading-relaxed text-slate-400">
-                      {item.a}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )
-        })}
-      </Reveal>
+                    {isOpen ? (
+                      <MinusIcon className="size-3" />
+                    ) : (
+                      <PlusIcon className="size-3" />
+                    )}
+                  </span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: EASE }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-5 pb-5 text-xs leading-relaxed text-white/55">
+                        {item.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
+        </Reveal>
+      </div>
     </section>
   )
 }
