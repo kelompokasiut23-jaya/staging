@@ -36,7 +36,7 @@ export function RoleGate({
   const router = useRouter()
 
   useEffect(() => {
-    if (auth.status === "signedOut") router.replace("/")
+    if (auth.status === "signedOut") router.replace("/masuk/")
   }, [auth.status, router])
 
   if (auth.status !== "signedIn") return <Loading />
