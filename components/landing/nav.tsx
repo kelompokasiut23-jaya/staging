@@ -78,7 +78,7 @@ export function Nav() {
         <div className="flex items-center gap-2">
           <Link
             href="/masuk/"
-            className="inline-flex items-center rounded-full border border-[#FFFFFF22] bg-[linear-gradient(135deg,#242424,#0E0E0E)] px-[22px] py-2.5 text-sm font-semibold text-[#F5F5F5] transition-colors hover:border-white/30"
+            className="inline-flex items-center rounded-full border border-[#FFFFFF22] bg-[linear-gradient(to_bottom_left,#242424,#0E0E0E)] px-[22px] py-2.5 text-sm font-semibold text-[#F5F5F5] transition-colors hover:border-white/30"
           >
             Masuk
           </Link>

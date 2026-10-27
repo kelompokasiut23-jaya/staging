@@ -67,7 +67,7 @@ export function Hero() {
       <div className="relative flex flex-col items-center gap-[26px] px-5 pt-12 text-center sm:px-10 lg:pt-[72px]">
         <motion.p
           {...fade(0)}
-          className="inline-flex items-center gap-2 rounded-full border border-[#FFFFFF1F] bg-[linear-gradient(135deg,#242424,#0E0E0E)] px-3.5 py-[7px] text-xs font-medium text-[#D8D8D8]"
+          className="inline-flex items-center gap-2 rounded-full border border-[#FFFFFF1F] bg-[linear-gradient(to_bottom_left,#242424,#0E0E0E)] px-3.5 py-[7px] text-xs font-medium text-[#D8D8D8]"
         >
           <RadioIcon className="size-3.5 text-[#4690FF]" /> Pemantauan QC
           real-time
@@ -103,7 +103,7 @@ export function Hero() {
           </Link>
           <a
             href="#cara-kerja"
-            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#FFFFFF1F] bg-[linear-gradient(135deg,#242424,#0E0E0E)] px-[22px] py-3.5 text-sm font-semibold text-[#F5F5F5] transition-colors hover:border-white/30 sm:w-auto"
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-[#FFFFFF1F] bg-[linear-gradient(to_bottom_left,#242424,#0E0E0E)] px-[22px] py-3.5 text-sm font-semibold text-[#F5F5F5] transition-colors hover:border-white/30 sm:w-auto"
           >
             Lihat cara kerja <PlayIcon className="size-3.5 fill-current" />
           </a>

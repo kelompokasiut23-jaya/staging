@@ -3,9 +3,9 @@ import { Reveal } from "./motion-kit"
 /** Nilai persis dari desain "Landing Page 1". */
 export const BG = "#050505"
 export const CARD =
-  "rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,#303030_0%,#0C0C0C_65%,#070707_100%)]"
+  "rounded-[32px] border border-white/10 bg-[linear-gradient(to_bottom_left,#303030_0%,#0C0C0C_65%,#070707_100%)]"
 export const TILE =
-  "border border-[#FFFFFF12] bg-[linear-gradient(135deg,#242424,#0E0E0E)]"
+  "border border-[#FFFFFF12] bg-[linear-gradient(to_bottom_left,#242424,#0E0E0E)]"
 export const PAD_X = "px-5 sm:px-10 lg:px-20"
 export const TITLE =
   "text-[32px] leading-[1.08] font-medium tracking-[-0.042em] text-[#F5F5F5] sm:text-[44px] lg:text-[52px]"
@@ -13,7 +13,7 @@ export const TITLE =
 export function Pill({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className={`inline-flex rounded-full border border-[#FFFFFF1F] bg-[linear-gradient(135deg,#242424,#0E0E0E)] px-4 py-[7px] text-xs font-medium text-[#D8D8D8]`}
+      className={`inline-flex rounded-full border border-[#FFFFFF1F] bg-[linear-gradient(to_bottom_left,#242424,#0E0E0E)] px-4 py-[7px] text-xs font-medium text-[#D8D8D8]`}
     >
       {children}
     </span>

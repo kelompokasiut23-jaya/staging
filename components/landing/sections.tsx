@@ -156,7 +156,7 @@ export function Features() {
                   Lewat 426 jam
                 </span>
               </div>
-              <div className="flex items-center gap-3 rounded-[20px] border border-[#F0525A55] bg-[linear-gradient(135deg,#F0525A33,#F0525A08)] px-4 py-3.5">
+              <div className="flex items-center gap-3 rounded-[20px] border border-[#F0525A55] bg-[linear-gradient(to_bottom_left,#F0525A33,#F0525A08)] px-4 py-3.5">
                 <BellRingIcon className="size-5 shrink-0 text-[#FF7B82]" />
                 <div className="flex flex-1 flex-col gap-0.5">
                   <span className="text-sm font-semibold text-[#F5F5F5]">

@@ -153,7 +153,7 @@ function Row({
 
 export function MockDashboard() {
   return (
-    <div className="h-[760px] w-[1380px] overflow-hidden rounded-[40px] border-x-2 border-t-2 border-[#FFFFFF2A] bg-[linear-gradient(135deg,#1C1C1C,#080808)] p-3 text-left">
+    <div className="h-[760px] w-[1380px] overflow-hidden rounded-[40px] border-x-2 border-t-2 border-[#FFFFFF2A] bg-[linear-gradient(to_bottom_left,#1C1C1C,#080808)] p-3 text-left">
       <div className="flex h-full overflow-hidden rounded-[30px] bg-[#121212]">
         <aside className="flex w-[288px] shrink-0 flex-col justify-between border-r border-[#333] bg-[#1B1B1B]">
           <div>
