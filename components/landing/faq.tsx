@@ -4,7 +4,8 @@ import { useState } from "react"
 import { AnimatePresence, motion } from "motion/react"
 import { MinusIcon, PlusIcon } from "lucide-react"
 
-import { EASE, Reveal } from "./motion-kit"
+import { EASE, Reveal, WordReveal } from "./motion-kit"
+import { afterWords } from "./timing"
 import { CARD, Glow, PAD_X, Pill, Stage } from "./ui"
 
 const ITEMS = [
@@ -36,17 +37,21 @@ export function Faq() {
       </Stage>
 
       <div className="relative mx-auto flex max-w-[1280px] flex-col gap-10 lg:flex-row lg:gap-16">
-        <Reveal className="flex flex-col items-start gap-5 lg:w-[420px] lg:shrink-0">
-          <div id="faq" className="scroll-mt-24">
-            <Pill>FAQ</Pill>
-          </div>
+        <div className="flex flex-col items-start gap-5 lg:w-[420px] lg:shrink-0">
+          <Reveal y={12}>
+            <div id="faq" className="scroll-mt-24">
+              <Pill>FAQ</Pill>
+            </div>
+          </Reveal>
           <h2 className="text-[32px] leading-[1.08] font-medium tracking-[-0.041em] text-[#F5F5F5] sm:text-[40px] lg:text-[46px]">
-            Pertanyaan Yang Sering Muncul.
+            <WordReveal text="Pertanyaan Yang Sering Muncul." delay={0.1} />
           </h2>
-          <p className="text-[15px] leading-[1.6] text-[#8C8C8C]">
-            Tidak menemukan jawabannya? Hubungi super admin di tempat Anda.
-          </p>
-        </Reveal>
+          <Reveal delay={afterWords("Pertanyaan Yang Sering Muncul.")} y={16}>
+            <p className="text-[15px] leading-[1.6] text-[#8C8C8C]">
+              Tidak menemukan jawabannya? Hubungi super admin di tempat Anda.
+            </p>
+          </Reveal>
+        </div>
 
         <Reveal className="flex flex-1 flex-col gap-3.5" delay={0.1}>
           {ITEMS.map((item, i) => {

@@ -1,4 +1,5 @@
-import { Reveal } from "./motion-kit"
+import { Reveal, WordReveal } from "./motion-kit"
+import { afterWords } from "./timing"
 
 /** Nilai persis dari desain "Landing Page 1". */
 export const BG = "#050505"
@@ -32,15 +33,21 @@ export function SectionHead({
   text: string
 }) {
   return (
-    <Reveal className="flex flex-col items-center gap-5 text-center">
-      <div id={id} className="scroll-mt-24">
-        <Pill>{badge}</Pill>
-      </div>
-      <h2 className={`max-w-[820px] ${TITLE}`}>{title}</h2>
-      <p className="max-w-[520px] text-[15px] leading-[1.6] text-[#8C8C8C] sm:text-base">
-        {text}
-      </p>
-    </Reveal>
+    <div className="flex flex-col items-center gap-5 text-center">
+      <Reveal y={12}>
+        <div id={id} className="scroll-mt-24">
+          <Pill>{badge}</Pill>
+        </div>
+      </Reveal>
+      <h2 className={`max-w-[820px] ${TITLE}`}>
+        <WordReveal text={title} delay={0.1} />
+      </h2>
+      <Reveal delay={afterWords(title)} y={16}>
+        <p className="max-w-[520px] text-[15px] leading-[1.6] text-[#8C8C8C] sm:text-base">
+          {text}
+        </p>
+      </Reveal>
+    </div>
   )
 }
 

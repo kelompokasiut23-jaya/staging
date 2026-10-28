@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { ArrowUpRightIcon } from "lucide-react"
 
-import { Reveal } from "./motion-kit"
+import { Reveal, WordReveal } from "./motion-kit"
+import { afterWords } from "./timing"
 import { Logo } from "./nav"
 import { CARD, Pill } from "./ui"
 
@@ -24,13 +25,22 @@ export function CtaFooter() {
           <div className="flex flex-col items-center gap-[26px] text-center">
             <Pill>Mulai sekarang</Pill>
             <h2 className="text-[40px] leading-[1.04] font-medium tracking-[-0.044em] text-[#F5F5F5] sm:text-[56px] lg:text-[72px]">
-              Siap Melihat Kondisi
-              <span className="block text-[#B5B5B5]">QC Anda Hari Ini?</span>
+              <WordReveal text="Siap Melihat Kondisi" delay={0.2} />
+              <WordReveal
+                text="QC Anda Hari Ini?"
+                delay={0.55}
+                className="text-[#B5B5B5]"
+              />
             </h2>
-            <p className="max-w-[520px] text-[15px] leading-[1.6] text-[#8C8C8C] sm:text-base">
-              Masuk dengan username dan password dari super admin, lalu lihat
-              progres setiap lini dalam satu layar.
-            </p>
+            <Reveal
+              delay={afterWords("Siap Melihat Kondisi QC Anda Hari Ini?") + 0.2}
+              y={16}
+            >
+              <p className="max-w-[520px] text-[15px] leading-[1.6] text-[#8C8C8C] sm:text-base">
+                Masuk dengan username dan password dari super admin, lalu lihat
+                progres setiap lini dalam satu layar.
+              </p>
+            </Reveal>
             <Link
               href="/masuk/"
               className="inline-flex items-center gap-2.5 rounded-full bg-[#4690FF] py-3.5 pr-5 pl-[26px] text-[15px] font-semibold text-[#0A0A0A] transition-colors hover:bg-[#6AA5FF]"

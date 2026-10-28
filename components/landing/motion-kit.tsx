@@ -38,6 +38,49 @@ export function Reveal({
   )
 }
 
+/** Judul yang katanya naik satu per satu dari balik topeng, seperti judul hero. */
+export function WordReveal({
+  text,
+  className,
+  delay = 0,
+  step = 0.07,
+}: {
+  text: string
+  className?: string
+  delay?: number
+  step?: number
+}) {
+  const reduce = useReducedMotion()
+  return (
+    <motion.span
+      className={`block ${className ?? ""}`}
+      aria-label={text}
+      initial={reduce ? false : "hidden"}
+      whileInView="show"
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ staggerChildren: step, delayChildren: delay }}
+    >
+      {text.split(" ").map((w, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className="inline-block overflow-hidden pb-1.5 align-bottom"
+        >
+          <motion.span
+            className="inline-block"
+            variants={{
+              hidden: { y: "110%" },
+              show: { y: 0, transition: { duration: 0.85, ease: EASE } },
+            }}
+          >
+            {w}&nbsp;
+          </motion.span>
+        </span>
+      ))}
+    </motion.span>
+  )
+}
+
 /** Anak-anaknya muncul bergantian. */
 export function Stagger({
   children,
