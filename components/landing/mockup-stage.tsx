@@ -1,16 +1,30 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "motion/react"
 
 const W = 1380
 const H = 720 // 40px bagian bawah jendela terpotong, seperti di desain
 
-/** Memperkecil jendela 1380px agar muat di layar, dan memiringkannya saat digulir. */
+const TILT = 18 // derajat miring ke belakang saat halaman baru dibuka
+const SHRINK = 0.93
+
+/**
+ * Memperkecil jendela 1380px agar muat di layar. Saat halaman baru dibuka, jendela agak
+ * rebah ke belakang; makin digulir makin tegak, dan sudah tegak penuh ketika seluruh
+ * jendela terlihat di layar.
+ */
 export function MockupStage({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion()
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ scale: 1, left: 0 })
+  const [dist, setDist] = useState(400) // jarak gulir sampai jendela tegak
 
   useEffect(() => {
     const el = box.current
@@ -19,6 +33,10 @@ export function MockupStage({ children }: { children: React.ReactNode }) {
       const w = el.clientWidth
       const scale = Math.min(1, w / W)
       setSize({ scale, left: Math.max(0, (w - W * scale) / 2) })
+      // gulir yang dibutuhkan sampai seluruh jendela terlihat, dengan batas wajar
+      const top = el.getBoundingClientRect().top + window.scrollY
+      const need = top + H * scale - window.innerHeight + 24
+      setDist(Math.min(800, Math.max(240, need)))
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -26,12 +44,11 @@ export function MockupStage({ children }: { children: React.ReactNode }) {
     return () => ro.disconnect()
   }, [])
 
-  const { scrollYProgress } = useScroll({
-    target: box,
-    offset: ["start 95%", "start 35%"],
-  })
-  const rotateX = useTransform(scrollYProgress, [0, 1], [reduce ? 0 : 12, 0])
-  const lift = useTransform(scrollYProgress, [0, 1], [reduce ? 1 : 0.95, 1])
+  const { scrollY } = useScroll()
+  const raw = useTransform(scrollY, (y) => Math.min(1, Math.max(0, y / dist)))
+  const progress = useSpring(raw, { stiffness: 140, damping: 26, mass: 0.4 })
+  const rotateX = useTransform(progress, [0, 1], [reduce ? 0 : TILT, 0])
+  const lift = useTransform(progress, [0, 1], [reduce ? 1 : SHRINK, 1])
 
   return (
     <div className="[perspective:1600px]">
