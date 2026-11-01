@@ -24,7 +24,6 @@ function Loading() {
   )
 }
 
-/** Menampilkan isi halaman hanya untuk role yang diizinkan. */
 export function RoleGate({
   roles,
   children,

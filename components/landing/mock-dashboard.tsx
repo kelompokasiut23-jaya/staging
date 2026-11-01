@@ -17,12 +17,6 @@ import {
 
 import { Bar, Counter, EASE } from "./motion-kit"
 
-/*
- * Salinan halaman "Daftar Barang" dan "Pengguna" pada ukuran aslinya (1380 x 760).
- * Tab, kolom cari, dan menu samping bisa diklik. Datanya contoh, bukan data asli.
- * Ukurannya diperkecil oleh MockupStage.
- */
-
 type Page = "barang" | "pengguna"
 export type Status = "belum" | "diperiksa" | "selesai"
 

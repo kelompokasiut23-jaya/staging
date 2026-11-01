@@ -28,11 +28,6 @@ import {
 } from "./mock-dashboard"
 import { Bar, Counter, EASE } from "./motion-kit"
 
-/*
- * Tampilan ponsel dari halaman "Daftar Barang" dan "Pengguna", mengikuti tampilan mobile
- * aplikasi. Menu samping dibuka lewat tombol di pojok kiri atas. Datanya contoh.
- */
-
 type Page = "barang" | "pengguna"
 
 const noBar = "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

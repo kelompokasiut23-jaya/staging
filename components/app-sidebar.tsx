@@ -55,7 +55,6 @@ const ITEMS = {
   },
 } satisfies Record<string, NavItem>
 
-// Menu yang boleh diakses setiap role.
 const NAV: Record<Role, NavItem[]> = {
   super_admin: [ITEMS.items, ITEMS.users],
   admin: [ITEMS.items],

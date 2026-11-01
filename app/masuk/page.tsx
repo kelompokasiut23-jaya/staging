@@ -25,7 +25,6 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
 
-  // Sudah masuk: langsung ke halaman sesuai role.
   useEffect(() => {
     if (auth.status === "signedIn") router.replace(homeOf(auth.user.role))
   }, [auth, router])

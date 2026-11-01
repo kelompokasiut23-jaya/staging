@@ -28,7 +28,6 @@ function getSnapshot() {
   return now
 }
 
-/** Waktu sekarang dalam milidetik, diperbarui berkala. Bernilai 0 sebelum halaman siap. */
 export function useNow() {
   return useSyncExternalStore(subscribe, getSnapshot, () => 0)
 }

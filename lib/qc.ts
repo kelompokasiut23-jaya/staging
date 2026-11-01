@@ -4,7 +4,6 @@ export interface User {
   id: string
   name: string
   role: Role
-  /** Line tempat bertugas (QC) atau line yang diawasi (admin). Kosong untuk super admin. */
   line: string
   username: string
   active: boolean
@@ -42,15 +41,12 @@ export interface TaskLog {
   note: string
 }
 
-/** Satu target QC: satu client + satu item + satu warna, dikerjakan oleh satu QC. */
 export interface QcTask {
   id: string
-  /** Nama client / perusahaan pemilik barang. */
   brand: string
   item: string
   color: string
   line: string
-  /** id user QC yang ditugaskan. */
   assignedTo: string
   deadline: string
   sizes: SizeCount[]
@@ -143,7 +139,6 @@ export function formatPercent(value: number) {
   return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(value)}%`
 }
 
-/** Teks sisa waktu yang mudah dibaca, misalnya "2 jam 15 menit lagi". */
 export function timeLeft(deadline: string, now: number) {
   const diff = Date.parse(deadline) - now
   const minutes = Math.round(Math.abs(diff) / 60000)
@@ -158,7 +153,6 @@ export function timeLeft(deadline: string, now: number) {
   return diff >= 0 ? `${text} lagi` : `lewat ${text}`
 }
 
-/** Password acak yang mudah dibacakan: tanpa huruf/angka yang mirip (l, 1, O, 0). */
 export function generatePassword(length = 8) {
   const chars = "abcdefghjkmnpqrstuvwxyz23456789"
   const values = crypto.getRandomValues(new Uint32Array(length))

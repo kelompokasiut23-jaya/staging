@@ -1,9 +1,6 @@
--- Struktur data Monitoring QC.
--- Role: super_admin (kelola semua), admin (lihat line-nya), qc (kerjakan tugasnya).
 
 create type public.app_role as enum ('super_admin', 'admin', 'qc');
 
--- Profil pengguna. Akun login ada di auth.users, dibuat lewat fungsi admin-users.
 create table public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   name text not null check (length(trim(name)) > 0),
@@ -24,7 +21,6 @@ create table public.tasks (
   line text not null,
   assigned_to uuid not null references public.profiles (id),
   deadline timestamptz not null,
-  -- [{ "size": "M", "target": 300, "passed": 0, "defect": 0 }, ...]
   sizes jsonb not null,
   status text not null default 'belum' check (status in ('belum', 'diperiksa', 'selesai')),
   note text not null default '',
@@ -50,10 +46,6 @@ create table public.task_logs (
 
 create index task_logs_task_id_idx on public.task_logs (task_id);
 
--- ---------------------------------------------------------------------------
--- Fungsi bantu untuk aturan akses
--- ---------------------------------------------------------------------------
-
 create function public.my_role() returns public.app_role
 language sql stable security definer set search_path = public as $$
   select role from public.profiles where id = auth.uid() and active
@@ -63,10 +55,6 @@ create function public.my_line() returns text
 language sql stable security definer set search_path = public as $$
   select line from public.profiles where id = auth.uid() and active
 $$;
-
--- ---------------------------------------------------------------------------
--- Aturan akses (Row Level Security)
--- ---------------------------------------------------------------------------
 
 alter table public.profiles enable row level security;
 alter table public.tasks enable row level security;
@@ -104,10 +92,6 @@ using (public.my_role() = 'super_admin' and status = 'belum');
 create policy "riwayat: mengikuti akses tugas"
 on public.task_logs for select to authenticated
 using (exists (select 1 from public.tasks t where t.id = task_id));
-
--- ---------------------------------------------------------------------------
--- Validasi saat super admin menambah tugas
--- ---------------------------------------------------------------------------
 
 create function public.tasks_before_insert() returns trigger
 language plpgsql security definer set search_path = public as $$
@@ -156,10 +140,6 @@ $$;
 create trigger tasks_before_insert
 before insert on public.tasks
 for each row execute function public.tasks_before_insert();
-
--- ---------------------------------------------------------------------------
--- Aksi QC: simpan hasil dan tandai selesai
--- ---------------------------------------------------------------------------
 
 create function public.save_counts(p_task text, p_counts jsonb, p_note text default '')
 returns void
@@ -243,5 +223,4 @@ revoke all on function public.finish_task(text, text) from public, anon;
 grant execute on function public.save_counts(text, jsonb, text) to authenticated;
 grant execute on function public.finish_task(text, text) to authenticated;
 
--- Perubahan langsung dikirim ke layar yang sedang terbuka.
 alter publication supabase_realtime add table public.tasks, public.task_logs;

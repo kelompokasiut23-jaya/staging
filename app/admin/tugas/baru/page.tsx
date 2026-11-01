@@ -99,7 +99,6 @@ function NewTaskForm() {
     ])
   }
 
-  // Pesan error dihitung ulang setiap kali isian berubah, jadi langsung hilang begitu diperbaiki.
   function validate() {
     const next: Errors = {}
     if (!brand.trim()) next.brand = "Nama client wajib diisi"

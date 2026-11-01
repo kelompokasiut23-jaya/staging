@@ -10,21 +10,16 @@ import {
 } from "motion/react"
 
 const W = 1380
-const H = 720 // 40px bagian bawah jendela terpotong, seperti di desain
+const H = 720
 
-const TILT = 18 // derajat miring ke belakang saat halaman baru dibuka
+const TILT = 18
 const SHRINK = 0.93
 
-/**
- * Memperkecil jendela 1380px agar muat di layar. Saat halaman baru dibuka, jendela agak
- * rebah ke belakang; makin digulir makin tegak, dan sudah tegak penuh ketika seluruh
- * jendela terlihat di layar.
- */
 export function MockupStage({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion()
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ scale: 1, left: 0 })
-  const [dist, setDist] = useState(400) // jarak gulir sampai jendela tegak
+  const [dist, setDist] = useState(400)
 
   useEffect(() => {
     const el = box.current
@@ -33,7 +28,6 @@ export function MockupStage({ children }: { children: React.ReactNode }) {
       const w = el.clientWidth
       const scale = Math.min(1, w / W)
       setSize({ scale, left: Math.max(0, (w - W * scale) / 2) })
-      // gulir yang dibutuhkan sampai seluruh jendela terlihat, dengan batas wajar
       const top = el.getBoundingClientRect().top + window.scrollY
       const need = top + H * scale - window.innerHeight + 24
       setDist(Math.min(800, Math.max(240, need)))

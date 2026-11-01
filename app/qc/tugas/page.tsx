@@ -91,7 +91,6 @@ function TaskLoader({ user }: { user: User }) {
   if (tasks === null) return <Loading />
 
   const task = tasks.find((t) => t.id === id)
-  // QC hanya boleh membuka tugas yang ditugaskan kepadanya.
   if (!task || task.assignedTo !== user.id) {
     return (
       <div className="grid gap-4">
@@ -105,7 +104,6 @@ function TaskLoader({ user }: { user: User }) {
     )
   }
 
-  // key: form kembali ke data terbaru setiap kali tugas disimpan.
   return <TaskDetail key={task.updatedAt} task={task} />
 }
 

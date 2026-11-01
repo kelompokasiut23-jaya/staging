@@ -36,7 +36,6 @@ export function EmptyState({
   )
 }
 
-/** Penjelasan singkat di dekat tombol yang sedang nonaktif. */
 export function DisabledReason({
   children,
   className,

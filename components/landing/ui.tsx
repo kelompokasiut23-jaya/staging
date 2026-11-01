@@ -1,7 +1,6 @@
 import { Reveal, WordReveal } from "./motion-kit"
 import { afterWords } from "./timing"
 
-/** Nilai persis dari desain "Landing Page 1". */
 export const BG = "#050505"
 export const CARD =
   "rounded-[32px] border border-white/10 bg-[linear-gradient(to_bottom_left,#303030_0%,#0C0C0C_65%,#070707_100%)]"
@@ -51,7 +50,6 @@ export function SectionHead({
   )
 }
 
-/** Bidang 1440px yang selalu di tengah, supaya posisi latar sama dengan desain di layar mana pun. */
 export function Stage({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -92,7 +90,6 @@ export function Glow({
   )
 }
 
-/** Sinar miring lembut. `rotate` memakai arah putaran CSS. */
 export function Beam({
   x,
   y,
@@ -121,7 +118,6 @@ export function Beam({
   )
 }
 
-/** Tiga sinar bertumpuk, seperti di desain. */
 export function Beams({ side }: { side: "right" | "left" }) {
   const set =
     side === "right"
@@ -150,7 +146,6 @@ export function Beams({ side }: { side: "right" | "left" }) {
   )
 }
 
-/** Sinar vertikal bertumpuk di belakang hero. */
 export function HeroBeams() {
   const layers = [
     [0, 640, "#1E1E1E"],

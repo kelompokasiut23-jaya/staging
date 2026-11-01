@@ -16,7 +16,6 @@ export interface NavItem {
   title: string
   url: string
   icon: React.ReactNode
-  /** Halaman lain yang juga menandai menu ini aktif. */
   also?: string[]
 }
 

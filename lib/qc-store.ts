@@ -14,12 +14,6 @@ import type {
 } from "@/lib/qc"
 import { supabase, usernameToEmail } from "@/lib/supabase"
 
-/*
- * Semua akses data lewat file ini. Data diambil dari Supabase, dan perubahan
- * dari pengguna lain (misalnya admin menambah barang) langsung masuk lewat
- * langganan real time. Aturan siapa boleh melihat apa dijaga di database.
- */
-
 export type AuthState =
   | { status: "loading" }
   | { status: "signedOut"; message?: string }
@@ -42,10 +36,6 @@ function set(patch: Partial<State>) {
   state = { ...state, ...patch }
   listeners.forEach((l) => l())
 }
-
-// ---------------------------------------------------------------------------
-// Pemetaan baris database -> tipe aplikasi
-// ---------------------------------------------------------------------------
 
 interface ProfileRow {
   id: string
@@ -122,10 +112,6 @@ function toTask(row: TaskRow): QcTask {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Sesi login dan pengambilan data
-// ---------------------------------------------------------------------------
-
 async function loadProfile(userId: string) {
   const { data } = await supabase
     .from("profiles")
@@ -195,7 +181,6 @@ function subscribeRealtime() {
     .subscribe((status) => {
       realtimeLive = status === "SUBSCRIBED"
     })
-  // Cadangan: jika koneksi real time terputus, data tetap diperbarui berkala.
   pollTimer = setInterval(() => {
     if (!realtimeLive && document.visibilityState === "visible") void refetch()
   }, 10_000)
@@ -214,7 +199,6 @@ function start() {
   if (started || typeof window === "undefined") return
   started = true
   supabase.auth.onAuthStateChange((event, session) => {
-    // Panggilan Supabase lain ditunda agar tidak mengunci proses login.
     setTimeout(() => {
       if (!session) {
         unsubscribeRealtime()
@@ -249,7 +233,6 @@ export function useAuth(): AuthState {
   )
 }
 
-/** `null` selama data belum dimuat. */
 export function useTasks(): QcTask[] | null {
   return useSyncExternalStore(
     subscribe,
@@ -265,10 +248,6 @@ export function useUsers(): User[] | null {
     () => null
   )
 }
-
-// ---------------------------------------------------------------------------
-// Aksi. Semua mengembalikan pesan error (atau null jika berhasil).
-// ---------------------------------------------------------------------------
 
 type Result = Promise<string | null>
 
@@ -375,9 +354,7 @@ async function adminUsers(body: Record<string, unknown>): Result {
     try {
       const detail = await (error.context as Response).json()
       if (detail?.error) message = detail.error
-    } catch {
-      // pakai pesan bawaan
-    }
+    } catch {}
     return friendly(message)
   }
   if (data?.error) return friendly(data.error)

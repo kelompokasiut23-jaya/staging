@@ -12,7 +12,6 @@ import {
 
 export const EASE = [0.22, 1, 0.36, 1] as const
 
-/** Muncul dengan naik dan memudar saat masuk layar. Dimatikan bila pengguna memilih tanpa animasi. */
 export function Reveal({
   children,
   className,
@@ -38,7 +37,6 @@ export function Reveal({
   )
 }
 
-/** Judul yang katanya naik satu per satu dari balik topeng, seperti judul hero. */
 export function WordReveal({
   text,
   className,
@@ -81,7 +79,6 @@ export function WordReveal({
   )
 }
 
-/** Anak-anaknya muncul bergantian. */
 export function Stagger({
   children,
   className,
@@ -128,7 +125,6 @@ export function StaggerItem({
   )
 }
 
-/** Angka yang berhitung naik saat terlihat. */
 export function Counter({ to, className }: { to: number; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true, margin: "-60px" })
@@ -149,7 +145,6 @@ export function Counter({ to, className }: { to: number; className?: string }) {
   )
 }
 
-/** Batang progres yang terisi saat terlihat. */
 export function Bar({
   percent,
   className = "h-1.5",
